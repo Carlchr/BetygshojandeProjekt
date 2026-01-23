@@ -1,11 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="description" content="Forum för diskussioner">
+    <meta name="theme-color" content="#007bff">
+    <title>Elias Och Jeff Forum</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <header>
+        <h1>Elias Och Jeff Forum</h1>
+        <nav>
+            <ul>
+                <li><a href="/">Hem</a></li>
+                <li><a href="/about">Om</a></li>
+                <li><a href="/contact">Kontakt</a></li>
+                <li><a href="/forum">Forum</a></li>
+                <li><a href="/profile">Profil</a></li>
+            </ul>
+        </nav>
+    </header>
     
+    <main>
+        {% block content %}
+        <!-- Innehåll kommer att infogas här -->
+        {% endblock %}
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 Elias Och Jeff Forum. Alla rättigheter förbehållna.</p>
+    </footer>
 </body>
 </html>
