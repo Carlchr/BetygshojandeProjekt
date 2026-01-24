@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Forum för diskussioner">
     <meta name="theme-color" content="#007bff">
-    <title>Elias Och Jeff Forum</title>
+    <title>{% block customtitle %}Hemsida{% endblock %}</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
@@ -15,21 +15,22 @@
 </head>
 <body>
     <header>
-        <h1>Elias Och Jeff Forum</h1>
+        <h1>{% block title %}Elias Och Jeff Hemsida{% endblock %}</h1>
         <nav>
             <ul>
                 <li><a href="/">Hem</a></li>
-                <li><a href="/about">Om</a></li>
-                <li><a href="/contact">Kontakt</a></li>
                 <li><a href="/forum">Forum</a></li>
                 <li><a href="/profile">Profil</a></li>
+
+                <li><a href="/login">Login</a></li>
+                <li><a href="/register">Registrera</a></li>
             </ul>
         </nav>
     </header>
     
     <main>
         {% block content %}
-        <!-- Innehåll kommer att infogas här -->
+        <!-- Innehåll Här -->
         {% endblock %}
     </main>
     
