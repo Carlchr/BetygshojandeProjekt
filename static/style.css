@@ -40,9 +40,16 @@ footer p {
 }
 a {
     color: #007bff;
+    
 }
 a:hover {
     text-decoration: underline;
+}
+li {
+    list-style: none;
+    padding: 0;
+    text-decoration: none;
+    display: inline;
 }
 
 /* All css under är av Co-pilot */

@@ -29,7 +29,7 @@ def login_required(func):
         # Kontrollera om 'user'-nyckeln finns i sessionen
         if 'user' not in session:
             # Användaren är inte inloggad - omdirigera till inloggningssidan
-            return redirect(url_for('login_page'))
+            return redirect(url_for('login'))
        
         # Användaren är autentiserad - fortsätt till den skyddade routen
         return func(*args, **kwargs)
@@ -37,8 +37,8 @@ def login_required(func):
     return decorated_function
 
 @app.route('/')
-def index():
-    return redirect(url_for('login'))
+def start():
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -81,17 +81,6 @@ def register():
         except Exception as e:
             flash('Error creating account.', 'danger')
     return render_template('register.html')
-
-
-@app.route('/hash')
-def hash():
-    return generate_password_hash(request.args.get('password'))
-
-@app.route('/dashboard')
-def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return f"Welcome, {session['username']}!"
 
 @app.route('/profile')
 @login_required
