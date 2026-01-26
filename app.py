@@ -3,10 +3,10 @@ import mysql.connector
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from flask_socketio import SocketIO, emit
-
+import random as rand
 
 app = Flask(__name__)
-app.secret_key = 'replace_with_a_secret_key'
+app.secret_key = str(rand.randint(1, 1000))
 socketio = SocketIO(app)
 
 # MySQL configuration

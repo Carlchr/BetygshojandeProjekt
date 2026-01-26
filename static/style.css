@@ -1,33 +1,40 @@
-body{
+body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color:aliceblue;
     margin: 0;
     padding: 0;
 }
+
 header {
-    background-color: #007bff;
+    background-color: cornflowerblue;
     color: white;
     padding: 10px 0;
     text-align: center;
 }
+
 nav a {
     color: white;
     margin: 0 15px;
     text-decoration: none;
 }
+
 nav a:hover {
     text-decoration: underline;
 }
+
 .container {
     width: 80%;
     margin: auto;
     overflow: hidden;
 }
+
 h1, h2, h3 {
     color: #333;
 }
+
 footer {
-    background-color: #007bff;
+    /* 007bff */
+    background-color: cornflowerblue;
     color: white;
     text-align: center;
     padding: 10px 0;
@@ -35,16 +42,19 @@ footer {
     bottom: 0;
     width: 100%;
 }
+
 footer p {
     margin: 0;
 }
+
 a {
     color: #007bff;
-    
 }
+
 a:hover {
     text-decoration: underline;
 }
+
 li {
     list-style: none;
     padding: 0;
@@ -60,39 +70,47 @@ button {
     padding: 10px 15px;
     cursor: pointer;
 }
+
 button:hover {
     background-color: #0056b3;
 }
+
 form {
     margin: 20px 0;
 }
+
 form input[type="text"],
 form input[type="password"],
 form input[type="email"] {
-    width: 100%;
+    width: 90%;
     padding: 10px;
     margin: 5px 0 10px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
 form label {
     display: block;
     margin-bottom: 5px;
     color: #333;
 }
+
 form textarea {
-    width: 100%;
+    width: 98%;
     height: 100px;
     padding: 10px;
+    margin-left: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
 form select {
-    width: 100%;
+    width: 98%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
 form input[type="submit"] {
     background-color: #28a745;
     color: white;
@@ -100,6 +118,7 @@ form input[type="submit"] {
     padding: 10px 15px;
     cursor: pointer;
 }
+
 form input[type="submit"]:hover {
     background-color: #218838;
 }
