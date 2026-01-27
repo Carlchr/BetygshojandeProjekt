@@ -30,7 +30,6 @@ def login_required(func):
         if 'user' not in session:
             # Användaren är inte inloggad - omdirigera till inloggningssidan
             return redirect(url_for('login'))
-       
         # Användaren är autentiserad - fortsätt till den skyddade routen
         return func(*args, **kwargs)
    

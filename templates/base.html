@@ -1,42 +1,42 @@
 <!DOCTYPE html>
-<html lang="sv">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Forum för diskussioner">
-    <meta name="theme-color" content="#007bff">
-    <title>{% block customtitle %} Hemsida {% endblock %}</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/static/pictures/favicon.ico">
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header>
-        <h1>{% block title %}Jeffs Och Elias Hemsida{% endblock %}</h1>
-        <nav>
-            <ul>
-                <strong>
-                <li><a href="/">Hem</a></li>
-                <li><a href="/forum">Forum</a></li>
-                <li><a href="/profile">Profil</a></li>
-                <li><a href="/login">Login</a></li>
-                <li><a href="/register">Registrera</a></li>
-                </strong>
-            </ul>
-        </nav>
-    </header>
-    
-    <main>
-        {% block content %}
-        <!-- Innehåll Här -->
-        {% endblock %}
-    </main>
-    
-    <footer>
-        <p>&copy; 2024 Jeffs Och Elias Forum. Alla rättigheter förbehållna.</p>
-    </footer>
-</body>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Forum för diskussioner">
+        <meta name="theme-color" content="cornflowerblue">
+        <title>{% block customtitle %} Hemsida {% endblock %}</title>
+        
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="/static/pictures/favicon.ico">
+        
+        <!-- CSS -->
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+    <body>
+        <header>
+            <h1>{% block title %}Jeffs Och Elias Hemsida{% endblock %}</h1>
+            <nav>
+                <ul>
+                    <strong>
+                    <li><a href="/">Hem</a></li>
+                    <li><a href="/forum">Forum</a></li>
+                    <li><a href="/profile">Profil</a></li>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Registrera</a></li>
+                    </strong>
+                </ul>
+            </nav>
+        </header>
+        
+        <main>
+            {% block content %}
+            <!-- Innehåll Här -->
+            {% endblock %}
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 Jeffs Och Elias Forum. Alla rättigheter förbehållna.</p>
+        </footer>
+    </body>
 </html>
