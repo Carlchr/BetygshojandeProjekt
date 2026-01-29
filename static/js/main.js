@@ -44,5 +44,5 @@ sumButton.onclick = function (event) {
   //   console.log("Invalid operator");
   // }
 
-  div.innerHTML = `<div> Sum is: ${sum} </div>`;
+  div.insertAdjacentHTML("beforeend", `<div> Sum is: ${sum} </div>`);
 };
