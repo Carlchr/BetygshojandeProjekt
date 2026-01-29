@@ -15,7 +15,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',  # replace with your MySQL username
     'password': '',  # replace with your MySQL password
-    'database': 'forum-db'
+    'database': 'forum_db'
 }
 
 def get_db_connection():
@@ -32,9 +32,10 @@ def login_required(func):
     """
     @wraps(func) # Bevarar ursprunglig funktions metadata
     def decorated_function(*args, **kwargs):
-        # Kontrollera om 'user'-nyckeln finns i sessionen
-        if 'user' not in session:
-            # Användaren är inte inloggad - omdirigera till inloggningssidan
+        # Kontrollera om inloggnings-nyckel finns i sessionen
+        # Vi sätter `session['user_id']` och/eller `session['username']` vid login,
+        # så kontrollera `user_id` istället för en missvisande 'user'-nyckel.
+        if 'user_id' not in session:
             return redirect(url_for('login'))
         # Användaren är autentiserad - fortsätt till den skyddade routen
         return func(*args, **kwargs)
@@ -82,16 +83,30 @@ def login():
         username = request.form['username']
         password = request.form['password']
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        #Om ingen koppling kunde skapas
+        if conn is None:
+            flash('Databasanslutning misslyckades. Försök igen senare.', 'danger')
+            return render_template('login.html')
+        try:
+            #Hämta användare från databasen
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
+            user = cursor.fetchone()
+        finally:
+            try:
+                #slutar hämta info
+                cursor.close()
+            except:
+                pass
+            # stänger kopplingen
+            conn.close()
+
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             session['username'] = user['username']
             flash('Login successful!', 'success')
-            return redirect(url_for('dashboard'))
+
+            return redirect(url_for('profile'))
         else:
             flash('Invalid username or password', 'danger')
     return render_template('login.html')
@@ -135,5 +150,5 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use SocketIO runner (avoid calling app.run then socketio.run)
     socketio.run(app, debug=True, port=5500)
