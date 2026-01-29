@@ -1,5 +1,6 @@
 from flask import *
 import mysql.connector
+from mysql.connector import Error
 from werkzeug.security import *
 from functools import *
 from flask_socketio import *
@@ -18,8 +19,13 @@ DB_CONFIG = {
 }
 
 def get_db_connection():
-    return mysql.connector.connect(**DB_CONFIG)
-
+    try:
+        connection = mysql.connector.connect(**DB_CONFIG)
+        return connection
+    except Error as e:
+        print(f"Fel vid anslutning till MySQL: {e}")
+        return None
+    
 def login_required(func):
     """
     Middleware-decorator som skyddar routes genom att kontrollera användarautentisering.
@@ -34,6 +40,37 @@ def login_required(func):
         return func(*args, **kwargs)
    
     return decorated_function
+
+
+@app.route('/trigger-500')
+def trigger_500():
+    """Route that intentionally triggers a 500 error by dividing by zero"""
+    app.logger.warning('Someone accessed the /trigger-500 route')
+    # This will cause a ZeroDivisionError and trigger our 500 error handler
+    result = 1 / 0
+    return f"This should never be reached: {result}"
+
+# Error handlers
+@app.errorhandler(404)
+def not_found_error(error):
+    """Custom 404 error handler"""
+    app.logger.warning(f'404 error: {request.url}')
+    
+    # it is posible to render a template and return a status code other than 200
+    return render_template('errors/404.html'), 404 # 404 is the status code for not found errors
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Custom 500 error handler"""
+    app.logger.error(f'Internal server error: {error}')
+    return render_template('errors/500.html'), 500 # 500 is the status code for internal server error
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """Handle any unhandled exceptions"""
+    app.logger.error(f'Unhandled exception: {error}', exc_info=True)
+    return render_template('errors/500.html'), 500 # 500 is the status code for internal server error
+
 
 @app.route('/')
 def start():

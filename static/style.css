@@ -122,3 +122,9 @@ form input[type="submit"] {
 form input[type="submit"]:hover {
     background-color: #218838;
 }
+
+.error-image {
+    width: 300px;
+    height: auto;
+    margin-top: 20px;
+}  
