@@ -38,5 +38,21 @@
         <footer>
             <p>&copy; 2024 Jeffs Och Elias Forum. Alla rättigheter förbehållna.</p>
         </footer>
+
+        <script>
+        const socket = io();
+    
+        socket.on("connect", () => {
+            console.log("Connected to server");
+        });
+
+        socket.on("user_connected", () => {
+            console.log("A user has connected");
+        });
+
+
+    </script>
+
+    <script src="static/js/main.js"></script>
     </body>
 </html>
