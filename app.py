@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import *
 import mysql.connector
-from werkzeug.security import check_password_hash, generate_password_hash
-from functools import wraps
-from flask_socketio import SocketIO, emit
+from werkzeug.security import *
+from functools import *
+from flask_socketio import *
 import random as rand
 
 app = Flask(__name__)
@@ -99,3 +99,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    socketio.run(app, debug=True, port=5500)
