@@ -128,3 +128,9 @@ form input[type="submit"]:hover {
     height: auto;
     margin-top: 20px;
 }  
+
+.note {
+    color: gray;
+    font-size: 0.9em;
+    margin-top: 10px;
+}

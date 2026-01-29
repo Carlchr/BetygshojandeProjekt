@@ -54,7 +54,7 @@ def trigger_500():
 @app.errorhandler(404)
 def not_found_error(error):
     """Custom 404 error handler"""
-    app.logger.warning(f'404 error: {request.url}')
+    app.logger.warning(f'{error} error: {request.url} not found')
     
     # it is posible to render a template and return a status code other than 200
     return render_template('errors/404.html'), 404 # 404 is the status code for not found errors
