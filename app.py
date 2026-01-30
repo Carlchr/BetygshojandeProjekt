@@ -4,11 +4,16 @@ from mysql.connector import Error
 from werkzeug.security import *
 from functools import *
 from flask_socketio import *
+from slowapi.errors import *
+from safety import limiter
 import random as rand
 
 app = Flask(__name__)
 app.secret_key = str(rand.randint(1, 1000))
 socketio = SocketIO(app)
+
+# Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
+limiter.init_app(app)
 
 # MySQL configuration
 DB_CONFIG = {
@@ -70,7 +75,13 @@ def internal_error(error):
 def handle_exception(error):
     """Handle any unhandled exceptions"""
     app.logger.error(f'Unhandled exception: {error}', exc_info=True)
-    return render_template('errors/500.html'), 500 
+    return render_template('errors/500.html')
+
+@app.errorhandler(RateLimitExceeded)
+def handle_limit(error): 
+    """Custom 429 error handler"""
+    app.logger.warning(f'Rate limit exceeded: {error}')
+    return render_template('errors/429.html'), 429 
 
 
 @app.route('/')
@@ -78,6 +89,8 @@ def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+# Limitern gör att man inte kan försöka "brute-forca" sig in i websidan utan blir skickad: error 429 vid den sjätte inloggningen under samma minut. 
+@limiter.limit("5/minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']

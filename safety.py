@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from itsdangerous import URLSafeTimedSerializer
 
-# Rate limiter configuration
-limiter = Limiter(key_func=get_remote_address, default_limits=["5 per minute", "100 per hour"])
+# Skappar en "rate limiter" som spårar användare genom deras IP-address 
+limiter = Limiter(key_func=get_remote_address)
+login_attempts = defaultdict(list)
