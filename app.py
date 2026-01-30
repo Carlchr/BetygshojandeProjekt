@@ -70,11 +70,11 @@ def internal_error(error):
 def handle_exception(error):
     """Handle any unhandled exceptions"""
     app.logger.error(f'Unhandled exception: {error}', exc_info=True)
-    return render_template('errors/500.html'), 500 # 500 is the status code for internal server error
+    return render_template('errors/500.html'), 500 
 
 
 @app.route('/')
-def start():
+def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -85,7 +85,7 @@ def login():
         conn = get_db_connection()
         #Om ingen koppling kunde skapas
         if conn is None:
-            flash('Databasanslutning misslyckades. Försök igen senare.', 'danger')
+            flash('Databasanslutning misslyckades. Försök igen senare.')
             return render_template('login.html')
         try:
             #Hämta användare från databasen
@@ -97,7 +97,7 @@ def login():
                 #slutar hämta info
                 cursor.close()
             except:
-                pass
+                pass 
             # stänger kopplingen
             conn.close()
 
@@ -147,8 +147,8 @@ def forum():
 def logout():
     session.clear()
     flash('Logged out successfully.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Use SocketIO runner (avoid calling app.run then socketio.run)
+    # Use SocketIO runner 
     socketio.run(app, debug=True, port=5500)
