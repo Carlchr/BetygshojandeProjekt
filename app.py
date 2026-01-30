@@ -4,9 +4,12 @@ from mysql.connector import Error
 from werkzeug.security import *
 from functools import *
 from flask_socketio import *
-from slowapi.errors import *
+from slowapi.errors import RateLimitExceeded
 from safety import limiter
 import random as rand
+
+# .\.venv\Scripts\Activate.ps1 (för att aktivera venv i terminalen (för säkrare installation av paket)), "deactivate" för att stänga av venv igen. 
+# Installera paketen med: pip install; "slowapi", "starlette", "mysql-connector-python", "flask-socketio"
 
 app = Flask(__name__)
 app.secret_key = str(rand.randint(1, 1000))
