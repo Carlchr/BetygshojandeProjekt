@@ -4,15 +4,14 @@ from mysql.connector import Error
 from werkzeug.security import *
 from functools import *
 from flask_socketio import *
-from slowapi.errors import RateLimitExceeded
 from safety import limiter
 import random as rand
 
 # .\.venv\Scripts\Activate.ps1 (för att aktivera venv i terminalen (för säkrare installation av paket)), "deactivate" för att stänga av venv igen. 
-# Installera paketen med: pip install; "slowapi", "starlette", "mysql-connector-python", "flask-socketio"
+# Installera paketen med: pip install; "Flask-Limiter" (denna ska laddas ned utan .venv mode), "mysql-connector-python", "flask-socketio"
 
 app = Flask(__name__)
-app.secret_key = str(rand.randint(1, 1000))
+app.secret_key = str(rand.randint(1, 10000))
 socketio = SocketIO(app)
 
 # Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
@@ -80,10 +79,10 @@ def handle_exception(error):
     app.logger.error(f'Unhandled exception: {error}', exc_info=True)
     return render_template('errors/500.html')
 
-@app.errorhandler(RateLimitExceeded)
-def handle_limit(error): 
+@app.errorhandler(429)
+def ratelimit_handler(e):
     """Custom 429 error handler"""
-    app.logger.warning(f'Rate limit exceeded: {error}')
+    app.logger.warning(f'Rate limit exceeded: {e}')
     return render_template('errors/429.html'), 429 
 
 
@@ -92,7 +91,6 @@ def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-# Limitern gör att man inte kan försöka "brute-forca" sig in i websidan utan blir skickad: error 429 vid den sjätte inloggningen under samma minut. 
 @limiter.limit("5/minute")
 def login():
     if request.method == 'POST':
