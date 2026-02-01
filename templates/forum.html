@@ -13,9 +13,29 @@
         <br>
     </nav>
 
-    <button type="text">New post</button>
+    <button type="text">New topic</button>
 
-    {{}}
+    <a href="{{ url_for('new_thread') }}" class="new-thread-btn">
+        New topic
+    </a>
+
+<div class="forum-list">
+    {% for topic in topics %}
+        <div class="thread-card">
+            <h3>
+                <a href="{{ url_for('view_thread', thread_id=topic.id) }}">
+                    {{ topic.title }}
+                </a>
+            </h3>
+
+            <p class="thread-meta">
+                Skapad av <strong>{{ topic.username }}</strong>
+            </p>
+        </div>
+    {% else %}
+        <p>Inga trådar ännu.</p>
+    {% endfor %}
+    </div>
 
 
 

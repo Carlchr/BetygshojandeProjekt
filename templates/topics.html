@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block customtitle %}{{ topics.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ topics.title }}</h1>
+
+<p class="thread-meta">
+    Skapad av <strong>{{ topics.username }}</strong>
+    | {{ topics.created_at.strftime('%Y-%m-%d %H:%M') }}
+</p>
+
+<div class="thread-content">
+    {{ topics.content }}
+</div>
+
+<hr>
+
+<h2>Kommentarer</h2>
+
+<div class="comments">
+    {% for post in posts %}
+        <div class="comment">
+            <p>{{ post.content }}</p>
+            <small>
+                {{ post.username }} •
+                {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </small>
+        </div>
+    {% else %}
+        <p>Inga kommentarer än.</p>
+    {% endfor %}
+</div>
+
+<form method="POST">
+    <textarea name="content" rows="3" placeholder="Skriv en kommentar..." required></textarea>
+    <button type="submit">Skicka</button>
+</form>
+{% endblock %}
