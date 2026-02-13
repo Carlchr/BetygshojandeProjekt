@@ -85,7 +85,6 @@ def ratelimit_handler(e):
     app.logger.warning(f'Rate limit exceeded: {e}')
     return render_template('errors/429.html'), 429 
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
