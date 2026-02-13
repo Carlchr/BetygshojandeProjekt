@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block customtitle %}New topic{% endblock %}
+
+{% block content %}
+<h1>Skapa ny tråd</h1>
+
+<form method="POST">
+    <label for="title">Titel</label>
+    <input type="text" name="title" required>
+
+    <label for="content">Innehåll</label>
+    <textarea name="content" rows="6" required></textarea>
+
+    <button type="submit">Skapa tråd</button>
+</form>
+{% endblock %}

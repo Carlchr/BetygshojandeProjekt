@@ -4,11 +4,18 @@ from mysql.connector import Error
 from werkzeug.security import *
 from functools import *
 from flask_socketio import *
+from safety import limiter
 import random as rand
 
+# .\.venv\Scripts\Activate.ps1 (för att aktivera venv i terminalen (för säkrare installation av paket)), "deactivate" för att stänga av venv igen. 
+# Installera paketen med: pip install; "Flask-Limiter" (denna ska laddas ned utan .venv mode), "mysql-connector-python", "flask-socketio"
+
 app = Flask(__name__)
-app.secret_key = str(rand.randint(1, 1000))
+app.secret_key = str(rand.randint(1, 10000))
 socketio = SocketIO(app)
+
+# Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
+limiter.init_app(app)
 
 # MySQL configuration
 DB_CONFIG = {
@@ -70,14 +77,20 @@ def internal_error(error):
 def handle_exception(error):
     """Handle any unhandled exceptions"""
     app.logger.error(f'Unhandled exception: {error}', exc_info=True)
-    return render_template('errors/500.html'), 500 # 500 is the status code for internal server error
+    return render_template('errors/500.html')
 
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    """Custom 429 error handler"""
+    app.logger.warning(f'Rate limit exceeded: {e}')
+    return render_template('errors/429.html'), 429 
 
 @app.route('/')
-def start():
+def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5/minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -85,7 +98,7 @@ def login():
         conn = get_db_connection()
         #Om ingen koppling kunde skapas
         if conn is None:
-            flash('Databasanslutning misslyckades. Försök igen senare.', 'danger')
+            flash('Databasanslutning misslyckades. Försök igen senare.')
             return render_template('login.html')
         try:
             #Hämta användare från databasen
@@ -97,7 +110,7 @@ def login():
                 #slutar hämta info
                 cursor.close()
             except:
-                pass
+                pass 
             # stänger kopplingen
             conn.close()
 
@@ -147,8 +160,8 @@ def forum():
 def logout():
     session.clear()
     flash('Logged out successfully.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Use SocketIO runner (avoid calling app.run then socketio.run)
+    # Use SocketIO runner 
     socketio.run(app, debug=True, port=5500)
