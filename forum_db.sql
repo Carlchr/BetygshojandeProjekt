@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Värd: 127.0.0.1
--- Tid vid skapande: 13 feb 2026 kl 19:35
+-- Tid vid skapande: 24 feb 2026 kl 20:04
 -- Serverversion: 10.4.32-MariaDB
 -- PHP-version: 8.0.30
 
@@ -28,6 +28,7 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `posts` (
+  `id` int(100) NOT NULL,
   `inlägg` varchar(100) NOT NULL,
   `datum` date NOT NULL,
   `username` varchar(50) NOT NULL
@@ -40,9 +41,17 @@ CREATE TABLE `posts` (
 --
 
 CREATE TABLE `topics` (
+  `id` int(100) NOT NULL,
   `rubrik` varchar(100) NOT NULL,
   `username` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumpning av Data i tabell `topics`
+--
+
+INSERT INTO `topics` (`id`, `rubrik`, `username`) VALUES
+(1, 'Programmering', 'test');
 
 -- --------------------------------------------------------
 
@@ -70,9 +79,16 @@ INSERT INTO `users` (`id`, `name`, `username`, `email`, `password`) VALUES
 --
 
 --
+-- Index för tabell `posts`
+--
+ALTER TABLE `posts`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Index för tabell `topics`
 --
 ALTER TABLE `topics`
+  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `rubrik` (`rubrik`);
 
 --
@@ -85,6 +101,18 @@ ALTER TABLE `users`
 --
 -- AUTO_INCREMENT för dumpade tabeller
 --
+
+--
+-- AUTO_INCREMENT för tabell `posts`
+--
+ALTER TABLE `posts`
+  MODIFY `id` int(100) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT för tabell `topics`
+--
+ALTER TABLE `topics`
+  MODIFY `id` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT för tabell `users`

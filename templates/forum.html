@@ -4,29 +4,15 @@
 {% block content %}
     <h1>Forum</h1>
     <p>This is the forum page.</p>
-    <!-- Ska ändras till något annat -->
-    <nav>
-        <input type="Number" id="numInput1" placeHolder="First number here" autocomplete="off"/>
-        <input type="text" id="operatorInput" placeHolder="Operator here" autocomplete="off"/>
-        <input type="Number" id="numInput2" placeHolder="Second number here" autocomplete="off"/>
-        <button type="text" id="sumButton">Sum</button>
-        <br>
-    </nav>
-
-    <button type="text">New topic</button>
-
-    <a href="{{ url_for('new_thread') }}" class="new-thread-btn">
-        New topic
+    
+    <a href="{{ url_for('new_topic') }}" class="new-thread-btn">
+        <button type="button">New topic</button>
     </a>
 
 <div class="forum-list">
     {% for topic in topics %}
         <div class="thread-card">
-            <h3>
-                <a href="{{ url_for('view_thread', thread_id=topic.id) }}">
-                    {{ topic.title }}
-                </a>
-            </h3>
+            <h3><a href="{{ url_for('open_thread', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3>
 
             <p class="thread-meta">
                 Skapad av <strong>{{ topic.username }}</strong>
@@ -36,8 +22,6 @@
         <p>Inga trådar ännu.</p>
     {% endfor %}
     </div>
-
-
 
 
     <div id="result"></div>

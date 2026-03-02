@@ -146,21 +146,104 @@ def register():
             flash('Error creating account.', 'danger')
     return render_template('register.html')
 
-@app.route('/profile')
-@login_required
-def profile():
-    return render_template('profile.html')
-
-@app.route('/forum')
-@login_required
-def forum():
-    return render_template('forum.html')
-
 @app.route('/logout')
 def logout():
     session.clear()
     flash('Logged out successfully.', 'info')
     return redirect(url_for('index'))
+
+@app.route('/profile')
+@login_required
+def profile():
+    conn = get_db_connection()
+    if conn is None:
+        flash('Databasanslutning misslyckades. Försök igen senare.')
+        return redirect(url_for('index'))
+    try:
+        #Om kopplingen finns tar den användarens info från databasen och visar den på profilsidan
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute('SELECT * FROM users WHERE id = %s', (session['user_id'],))
+        user = cursor.fetchone()
+    finally:
+        try:
+            cursor.close()
+        except:
+            pass
+        conn.close()
+    
+    if user is None:
+        flash('Användaren hittades inte.')
+        return redirect(url_for('logout'))
+    
+    return render_template('profile.html', user=user)
+
+@app.route('/forum')
+@login_required
+def forum():
+    conn = get_db_connection()
+    if conn is None:
+        flash('Databasanslutning misslyckades. Försök igen senare.')
+        return redirect(url_for('index'))
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute('SELECT * FROM topics')
+        topics = cursor.fetchall()
+    finally:
+        try:
+            cursor.close()
+        except:
+            pass
+        conn.close()
+    
+    return render_template('forum.html', topics=topics)
+
+@app.route('/new_topic', methods=['GET', 'POST'])
+@login_required
+def new_topic():
+    if request.method == 'POST':
+        title = request.form['title']
+        conn = get_db_connection()
+        if conn is None:
+            flash('Databasanslutning misslyckades. Försök igen senare.')
+            return render_template('new_topic.html')
+        try:
+            cursor = conn.cursor()
+            cursor.execute('INSERT INTO topics (rubrik, username) VALUES (%s, %s)', (title, session['username']))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            flash('Tråd skapad!', 'success')
+            return redirect(url_for('forum'))
+        except Exception as e:
+            flash('Fel vid skapande av tråd.', 'danger')
+    return render_template('new_topic.html')
+
+@app.route('/thread/<int:topic_id>')
+@login_required
+def open_thread(id):
+    conn = get_db_connection()
+    if conn is None:
+        flash('Databasanslutning misslyckades. Försök igen senare.')
+        return redirect(url_for('forum'))
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute('SELECT * FROM topics WHERE id = %s', (id,))
+        topic = cursor.fetchone()
+        
+        if topic is None:
+            flash('Tråden hittades inte.', 'danger')
+            return redirect(url_for('forum'))
+        
+        cursor.execute('SELECT * FROM posts WHERE topic_id = %s', (id,))
+        posts = cursor.fetchall()
+    finally:
+        try:
+            cursor.close()
+        except:
+            pass
+        conn.close()
+    
+    return render_template('open_thread.html', topic=topic, posts=posts)
 
 if __name__ == '__main__':
     # Use SocketIO runner 
