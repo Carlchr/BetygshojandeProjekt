@@ -8,9 +8,10 @@
     <a href="{{ url_for('new_topic') }}" class="new-thread-btn">
         <button type="button">New topic</button>
     </a>
-
 <div class="forum-list">
     {% for topic in topics %}
+
+    
         <div class="thread-card">
             <h3><a href="{{ url_for('open_thread', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3>
 

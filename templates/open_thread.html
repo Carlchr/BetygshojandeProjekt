@@ -12,9 +12,10 @@
 
 {% for post in posts %}
     <div class="post-card">
+        <br>
+        <p class="post-meta"><strong>{{ post.username }}</strong> -- Skapad {{ post.datum }}</p>
         <p>{{ post.inlägg }}</p>
-        <p class="post-meta">Skapad av <strong>{{ post.username }}</strong></p>
-        <p>Skapad {{ post.datum }}</p>
+    
     </div>
 {% endfor %}
 
