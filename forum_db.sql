@@ -28,13 +28,16 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `posts` (
-  `id` int(100) NOT NULL,
+  `id` int(100) NOT NULL AUTO_INCREMENT,
+  `topic_id` int(100) NOT NULL, 
   `inlägg` varchar(100) NOT NULL,
   `datum` date NOT NULL,
-  `username` varchar(50) NOT NULL
+  `username` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+
+----------------------------------------------------------
 
 --
 -- Tabellstruktur `topics`
@@ -79,12 +82,6 @@ INSERT INTO `users` (`id`, `name`, `username`, `email`, `password`) VALUES
 --
 
 --
--- Index för tabell `posts`
---
-ALTER TABLE `posts`
-  ADD PRIMARY KEY (`id`);
-
---
 -- Index för tabell `topics`
 --
 ALTER TABLE `topics`
@@ -101,12 +98,6 @@ ALTER TABLE `users`
 --
 -- AUTO_INCREMENT för dumpade tabeller
 --
-
---
--- AUTO_INCREMENT för tabell `posts`
---
-ALTER TABLE `posts`
-  MODIFY `id` int(100) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT för tabell `topics`

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block customtitle %} Nytt inlägg {% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Skapa nytt inlägg</h1>
+    
+    <form method="POST">
+        <label for="content">Inlägg:</label><br>
+        <textarea id="content" name="content" rows="6" cols="50" required></textarea><br><br>
+        
+        <input type="submit" value="Skapa inlägg">
+        <a href="{{ url_for('open_thread', topic_id=topic_id) }}">Avbryt</a>
+    </form>
+</div>
+{% endblock %}

@@ -197,7 +197,7 @@ def forum():
     
     return render_template('forum.html', topics=topics)
 
-@app.route('/new_topic', methods=['GET', 'POST'])
+@app.route('/forum/new_topic', methods=['GET', 'POST'])
 @login_required
 def new_topic():
     if request.method == 'POST':
@@ -218,23 +218,44 @@ def new_topic():
             flash('Fel vid skapande av tråd.', 'danger')
     return render_template('new_topic.html')
 
-@app.route('/thread/<int:topic_id>')
+@app.route('/forum/new_post/<int:topic_id>', methods=['GET', 'POST'])
 @login_required
-def open_thread(id):
+def new_post(topic_id):
+    if request.method == 'POST':
+        content = request.form['content']
+        conn = get_db_connection()
+        if conn is None:
+            flash('Databasanslutning misslyckades. Försök igen senare.')
+            return redirect(url_for('open_thread', topic_id=topic_id))
+        try:
+            cursor = conn.cursor()
+            cursor.execute('INSERT INTO posts (inlägg, datum, username, topic_id) VALUES (%s, CURDATE(), %s, %s)', (content, session['username'], topic_id))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            flash('Inlägg skapat!', 'success')
+            return redirect(url_for('open_thread', topic_id=topic_id))
+        except Exception as e:
+            flash('Fel vid skapande av inlägg.', 'danger')
+    return render_template('new_post.html', topic_id=topic_id)
+
+@app.route('/forum/thread/<int:topic_id>')
+@login_required
+def open_thread(topic_id):
     conn = get_db_connection()
     if conn is None:
         flash('Databasanslutning misslyckades. Försök igen senare.')
         return redirect(url_for('forum'))
     try:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute('SELECT * FROM topics WHERE id = %s', (id,))
+        cursor.execute('SELECT * FROM topics WHERE id = %s', (topic_id,))
         topic = cursor.fetchone()
         
         if topic is None:
             flash('Tråden hittades inte.', 'danger')
             return redirect(url_for('forum'))
         
-        cursor.execute('SELECT * FROM posts WHERE topic_id = %s', (id,))
+        cursor.execute('SELECT * FROM posts WHERE topic_id = %s', (topic_id,))
         posts = cursor.fetchall()
     finally:
         try:
