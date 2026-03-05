@@ -128,20 +128,22 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        name = request.form['name']
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         hashed_password = generate_password_hash(password)
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO users (username, password) VALUES (%s, %s)', (username, hashed_password))
+            cursor.execute('INSERT INTO users (name, username, email, password) VALUES (%s, %s, %s, %s)', (name, username, email, hashed_password))
             conn.commit()
             cursor.close()
             conn.close()
             flash('Account created successfully! You can now log in.', 'success')
             return redirect(url_for('login'))
         except mysql.connector.IntegrityError:
-            flash('Username already exists.', 'danger')
+            flash('Username or email already exists.', 'danger')
         except Exception as e:
             flash('Error creating account.', 'danger')
     return render_template('register.html')
