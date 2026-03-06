@@ -4,7 +4,7 @@ import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import *
 from functools import *
-from flask_socketio import *
+from flask_socketio import SocketIO
 from safety import limiter
 import random as rand
 from flask_jwt_extended import *
@@ -20,9 +20,12 @@ app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}'
 # Det undviker att användarinmatning som innehåller HTML eller JavaScript körs i webbläsaren
 app.jinja_env.autoescape = True  
 
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'super-secret-key')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=10)
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
 
+jwt = JWTManager(app)
 socketio = SocketIO(app)
 
 # Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
@@ -118,13 +121,10 @@ def login():
             conn.close()
 
         if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            flash('Login successful!', 'success')
-
-            return redirect(url_for('profile'))
+            access_token = create_access_token(identity=user['username'])
+            return jsonify(access_token=access_token), 200
         else:
-            flash('Invalid username or password', 'danger')
+            return jsonify(error='Invalid username or password'), 401
     return render_template('login.html')
 
 
@@ -154,13 +154,12 @@ def register():
 
 @app.route('/logout')
 def logout():
-    session.clear()
-    flash('Logged out successfully.', 'info')
-    return redirect(url_for('index'))
+    return jsonify(success=True), 200
 
 @app.route('/profile')
 @jwt_required()
 def profile():
+    current_user = get_jwt_identity()
     conn = get_db_connection()
     if conn is None:
         flash('Databasanslutning misslyckades. Försök igen senare.')
@@ -168,7 +167,7 @@ def profile():
     try:
         #Om kopplingen finns tar den användarens info från databasen och visar den på profilsidan
         cursor = conn.cursor(dictionary=True)
-        cursor.execute('SELECT * FROM users WHERE id = %s', (session['user_id'],))
+        cursor.execute('SELECT * FROM users WHERE username = %s', (current_user,))
         user = cursor.fetchone()
     finally:
         try:
@@ -178,10 +177,9 @@ def profile():
         conn.close()
     
     if user is None:
-        flash('Användaren hittades inte.')
-        return redirect(url_for('logout'))
+        return jsonify(error='User not found'), 404
     
-    return render_template('profile.html', user=user)
+    return jsonify(user), 200
 
 @app.route('/forum')
 @jwt_required()
@@ -201,27 +199,28 @@ def forum():
             pass
         conn.close()
     
-    return render_template('forum.html', topics=topics)
+    return jsonify(topics=topics), 200
 
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
 @jwt_required()
 def new_topic():
     if request.method == 'POST':
         title = request.form['title']
+        username = get_jwt_identity()
         conn = get_db_connection()
         if conn is None:
             flash('Databasanslutning misslyckades. Försök igen senare.')
             return render_template('new_topic.html')
         try:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO topics (rubrik, username) VALUES (%s, %s)', (title, session['username']))
+            cursor.execute('INSERT INTO topics (rubrik, username) VALUES (%s, %s)', (title, username))
             conn.commit()
+            topic_id = cursor.lastrowid
             cursor.close()
             conn.close()
-            flash('Tråd skapad!', 'success')
-            return redirect(url_for('forum'))
+            return jsonify(success=True, topic_id=topic_id), 201
         except Exception as e:
-            flash('Fel vid skapande av tråd.', 'danger')
+            return jsonify(error='Error creating topic'), 500
     return render_template('new_topic.html')
 
 @app.route('/forum/new_post/<int:topic_id>', methods=['GET', 'POST'])
@@ -229,6 +228,7 @@ def new_topic():
 def new_post(topic_id):
     if request.method == 'POST':
         content = request.form['content']
+        username = get_jwt_identity()
         conn = get_db_connection()
         if conn is None:
             flash('Databasanslutning misslyckades. Försök igen senare.')
@@ -250,14 +250,13 @@ def new_post(topic_id):
         
         try:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO posts (inlägg, datum, username, topic_id) VALUES (%s, CURDATE(), %s, %s)', (content, session['username'], topic_id))
+            cursor.execute('INSERT INTO posts (inlägg, datum, username, topic_id) VALUES (%s, CURDATE(), %s, %s)', (content, username, topic_id))
             conn.commit()
             cursor.close()
             conn.close()
-            flash('Inlägg skapat!', 'success')
-            return redirect(url_for('open_thread', topic_id=topic_id))
+            return jsonify(success=True), 201
         except Exception as e:
-            flash('Fel vid skapande av inlägg.', 'danger')
+            return jsonify(error='Error creating post'), 500
     return render_template('new_post.html', topic_id=topic_id)
 
 @app.route('/forum/thread/<int:topic_id>')
@@ -273,8 +272,7 @@ def open_thread(topic_id):
         topic = cursor.fetchone()
         
         if topic is None:
-            flash('Tråden hittades inte.', 'danger')
-            return redirect(url_for('forum'))
+            return jsonify(error='Topic not found'), 404
         
         cursor.execute('SELECT * FROM posts WHERE topic_id = %s', (topic_id,))
         posts = cursor.fetchall()
@@ -285,7 +283,7 @@ def open_thread(topic_id):
             pass
         conn.close()
     
-    return render_template('open_thread.html', topic=topic, posts=posts)
+    return jsonify(topic=topic, posts=posts), 200
 
 if __name__ == '__main__':
     # Use SocketIO runner 
