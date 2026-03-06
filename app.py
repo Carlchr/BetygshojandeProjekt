@@ -44,20 +44,14 @@ def get_db_connection():
         print(f"Fel vid anslutning till MySQL: {e}")
         return None
     
-def login_required(func):
-    """
-    Middleware-decorator som skyddar routes genom att kontrollera användarautentisering.
-    """
-    @wraps(func) # Bevarar ursprunglig funktions metadata
-    def decorated_function(*args, **kwargs):
-        # Kontrollera om inloggnings-nyckel finns i sessionen
-        # Vi sätter `session['user_id']` och/eller `session['username']` vid login,
-        # så kontrollera `user_id` istället för en missvisande 'user'-nyckel.
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        # Användaren är autentiserad - fortsätt till den skyddade routen
-        return func(*args, **kwargs)
-    return decorated_function
+@app.route('/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    # Hämta identity från JWT, i det här fallet användarnamnet som vi satte som identity när vi skapade token
+    current_user = get_jwt_identity()
+    # Det här är för att visa att vi kan hämta hela JWT payloaden
+    print(get_jwt())
+    return jsonify(logged_in_as=current_user), 200
 
 @app.route('/trigger-500')
 def trigger_500():
@@ -165,7 +159,7 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/profile')
-@login_required
+@jwt_required()
 def profile():
     conn = get_db_connection()
     if conn is None:
@@ -190,7 +184,7 @@ def profile():
     return render_template('profile.html', user=user)
 
 @app.route('/forum')
-@login_required
+@jwt_required()
 def forum():
     conn = get_db_connection()
     if conn is None:
@@ -210,7 +204,7 @@ def forum():
     return render_template('forum.html', topics=topics)
 
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
-@login_required
+@jwt_required()
 def new_topic():
     if request.method == 'POST':
         title = request.form['title']
@@ -231,7 +225,7 @@ def new_topic():
     return render_template('new_topic.html')
 
 @app.route('/forum/new_post/<int:topic_id>', methods=['GET', 'POST'])
-@login_required
+@jwt_required()
 def new_post(topic_id):
     if request.method == 'POST':
         content = request.form['content']
@@ -267,7 +261,7 @@ def new_post(topic_id):
     return render_template('new_post.html', topic_id=topic_id)
 
 @app.route('/forum/thread/<int:topic_id>')
-@login_required
+@jwt_required()
 def open_thread(topic_id):
     conn = get_db_connection()
     if conn is None:
