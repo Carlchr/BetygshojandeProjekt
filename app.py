@@ -22,7 +22,10 @@ app.jinja_env.autoescape = True
 
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'super-secret-key')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=10)
+
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_HEADER_NAME'] = 'Authorization'
+app.config['JWT_HEADER_TYPE'] = 'Bearer'
 
 
 jwt = JWTManager(app)
@@ -98,6 +101,7 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5/minute")
 def login():
+    """Login route that authenticates users with tokens"""
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -131,6 +135,7 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("10/hour")  # Förhindra brute-force registreringar
 def register():
+    """User registration route"""
     if request.method == 'POST':
         name = request.form['name']
         username = request.form['username']
@@ -154,11 +159,13 @@ def register():
 
 @app.route('/logout')
 def logout():
+    """User logout route"""
     return jsonify(success=True), 200
 
 @app.route('/profile')
 @jwt_required()
 def profile():
+    """User profile route"""
     current_user = get_jwt_identity()
     conn = get_db_connection()
     if conn is None:
@@ -177,13 +184,15 @@ def profile():
         conn.close()
     
     if user is None:
-        return jsonify(error='User not found'), 404
+        flash('Användaren hittades inte.')
+        return redirect(url_for('logout'))
     
-    return jsonify(user), 200
+    return render_template('profile.html', user=user)
 
 @app.route('/forum')
 @jwt_required()
 def forum():
+    """Forum route that displays all topics"""
     conn = get_db_connection()
     if conn is None:
         flash('Databasanslutning misslyckades. Försök igen senare.')
@@ -199,11 +208,12 @@ def forum():
             pass
         conn.close()
     
-    return jsonify(topics=topics), 200
+    return render_template('forum.html', topics=topics)
 
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
 @jwt_required()
 def new_topic():
+    """Route for creating a new forum topic"""
     if request.method == 'POST':
         title = request.form['title']
         username = get_jwt_identity()
@@ -215,24 +225,25 @@ def new_topic():
             cursor = conn.cursor()
             cursor.execute('INSERT INTO topics (rubrik, username) VALUES (%s, %s)', (title, username))
             conn.commit()
-            topic_id = cursor.lastrowid
             cursor.close()
             conn.close()
-            return jsonify(success=True, topic_id=topic_id), 201
+            flash('Tråd skapad!', 'success')
+            return redirect(url_for('forum'))
         except Exception as e:
-            return jsonify(error='Error creating topic'), 500
+            flash('Fel vid skapande av tråd.', 'danger')
     return render_template('new_topic.html')
 
 @app.route('/forum/new_post/<int:topic_id>', methods=['GET', 'POST'])
 @jwt_required()
 def new_post(topic_id):
+    """Route for creating a new post in a forum topic"""
     if request.method == 'POST':
         content = request.form['content']
         username = get_jwt_identity()
         conn = get_db_connection()
         if conn is None:
             flash('Databasanslutning misslyckades. Försök igen senare.')
-            return redirect(url_for('open_thread', topic_id=topic_id))
+            return redirect(url_for('open_topic', topic_id=topic_id))
         
         # Validera att topic_id existerar
         try:
@@ -254,14 +265,15 @@ def new_post(topic_id):
             conn.commit()
             cursor.close()
             conn.close()
-            return jsonify(success=True), 201
+            flash('Inlägg skapat!', 'success')
+            return redirect(url_for('open_topic', topic_id=topic_id))
         except Exception as e:
-            return jsonify(error='Error creating post'), 500
+            flash('Fel vid skapande av inlägg.', 'danger')
     return render_template('new_post.html', topic_id=topic_id)
 
-@app.route('/forum/thread/<int:topic_id>')
+@app.route('/forum/topic/<int:topic_id>')
 @jwt_required()
-def open_thread(topic_id):
+def open_topic(topic_id):
     conn = get_db_connection()
     if conn is None:
         flash('Databasanslutning misslyckades. Försök igen senare.')
@@ -272,7 +284,8 @@ def open_thread(topic_id):
         topic = cursor.fetchone()
         
         if topic is None:
-            return jsonify(error='Topic not found'), 404
+            flash('Tråden hittades inte.', 'danger')
+            return redirect(url_for('forum'))
         
         cursor.execute('SELECT * FROM posts WHERE topic_id = %s', (topic_id,))
         posts = cursor.fetchall()
@@ -283,7 +296,7 @@ def open_thread(topic_id):
             pass
         conn.close()
     
-    return jsonify(topic=topic, posts=posts), 200
+    return render_template('open_topic.html', topic=topic, posts=posts)
 
 if __name__ == '__main__':
     # Use SocketIO runner 
