@@ -1,3 +1,4 @@
+import os
 from flask import *
 import mysql.connector
 from mysql.connector import Error
@@ -6,12 +7,22 @@ from functools import *
 from flask_socketio import *
 from safety import limiter
 import random as rand
+from flask_jwt_extended import *
+from datetime import timedelta 
 
 # .\.venv\Scripts\Activate.ps1 (för att aktivera venv i terminalen (för säkrare installation av paket)), "deactivate" för att stänga av venv igen. 
 # Installera paketen med: pip install; "Flask-Limiter" (denna ska laddas ned utan .venv mode), "mysql-connector-python", "flask-socketio"
 
 app = Flask(__name__)
-app.secret_key = str(rand.randint(1, 10000))
+app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
+
+# Gör all kod i jinja mallar till text istället vör kod. Förhindrar XSS attacker
+# Det undviker att användarinmatning som innehåller HTML eller JavaScript körs i webbläsaren
+app.jinja_env.autoescape = True  
+
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=10)
+
+
 socketio = SocketIO(app)
 
 # Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
@@ -46,9 +57,7 @@ def login_required(func):
             return redirect(url_for('login'))
         # Användaren är autentiserad - fortsätt till den skyddade routen
         return func(*args, **kwargs)
-   
     return decorated_function
-
 
 @app.route('/trigger-500')
 def trigger_500():
@@ -126,6 +135,7 @@ def login():
 
 
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit("10/hour")  # Förhindra brute-force registreringar
 def register():
     if request.method == 'POST':
         name = request.form['name']
@@ -229,6 +239,21 @@ def new_post(topic_id):
         if conn is None:
             flash('Databasanslutning misslyckades. Försök igen senare.')
             return redirect(url_for('open_thread', topic_id=topic_id))
+        
+        # Validera att topic_id existerar
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute('SELECT id FROM topics WHERE id = %s', (topic_id,))
+            topic = cursor.fetchone()
+            if topic is None:
+                flash('Tråden existerar inte.', 'danger')
+                return redirect(url_for('forum'))
+        finally:
+            try:
+                cursor.close()
+            except:
+                pass
+        
         try:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO posts (inlägg, datum, username, topic_id) VALUES (%s, CURDATE(), %s, %s)', (content, session['username'], topic_id))
