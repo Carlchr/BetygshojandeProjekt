@@ -18,7 +18,7 @@
 
     
         <div class="thread-card">
-            <h3><a href="{{ url_for('open_thread', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3>
+            <h3><a href="{{ url_for('open_topic', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3>
 
             <p class="thread-meta">
                 Skapad av <strong>{{ topic.username }}</strong>

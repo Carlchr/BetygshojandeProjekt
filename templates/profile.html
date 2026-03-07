@@ -4,11 +4,14 @@
 {% block content %}
 <div class="container mt-5">
     <h1>Profile Page</h1>
-    <p>Welcome, {{ user.name }}!</p>
-    <br><hr><br>
-    
-    <p>Name: {{ user.name }}</p>
-    <p>Username: {{ user.username }}</p>
-    <p>Email: {{ user.email }}</p>
-    <!-- Add more profile details as needed -->
+    {% if user %}
+        <p>Welcome, {{ user.name }}!</p>
+        <br><hr><br>
+        <p>Name: {{ user.name }}</p>
+        <p>Username: {{ user.username }}</p>
+        <p>Email: {{ user.email }}</p>
+    {% else %}
+        <p>Not logged in. <a href="/login">Login here</a></p>
+    {% endif %}
+</div>
 {% endblock %}
