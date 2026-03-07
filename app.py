@@ -149,48 +149,6 @@ def login():
 
     return response
 
-# @app.route('/login', methods=['GET', 'POST'])
-# @limiter.limit("50/minute")
-# def login():
-#     """Login route that authenticates users with tokens"""
-#     if request.method == 'POST':
-#         username = request.form['username']
-#         password = request.form['password']
-#         conn = get_db_connection()
-
-#         #Om ingen koppling kunde skapas
-#         if conn is None:
-#             flash('Databasanslutning misslyckades. Försök igen senare.')
-#             print("Database connection failed during login attempt.")
-#             return render_template('login.html')
-#         try:
-#             #Hämta användare från databasen
-#             cursor = conn.cursor(dictionary=True)
-#             cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
-#             user = cursor.fetchone()
-#             print(f"Database query executed for username: {username}")
-#         finally:
-#             try:
-#                 #slutar hämta info
-#                 cursor.close()
-#             except:
-#                 pass 
-#             # stänger kopplingen
-#             conn.close()
-
-#         if user and check_password_hash(user['password'], password):
-            
-#             access_token = create_access_token(identity=user['username'])
-                                    
-#             return jsonify({'access_token': access_token, 'username': user['username']}), 200
-#         else:
-#             flash('Invalid username or password', 'danger')
-#             print(f"Failed login attempt for username: {username}")
-#             return render_template('login.html')
-#     print("Rendering login page")
-#     return render_template('login.html')
-
-
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("10/hour")  # Förhindra brute-force registreringar
 def register():
@@ -233,13 +191,6 @@ def logout():
         unset_jwt_cookies(response)
         return response
 
-
-# helper to avoid JWT exceptions from malformed Authorization headers
-
-def _auth_header_is_bearer() -> bool:
-    header = request.headers.get('Authorization', '')
-    return bool(header and header.split()[0].lower() == 'bearer')
-
 @app.route('/profile')
 @jwt_required()
 def profile():
@@ -267,34 +218,6 @@ def profile():
 
     return render_template("profile.html", user=user)
 
-# @app.route('/profile')
-# def profile():
-
-#     current_user = get_jwt_identity()
-
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
-
-#     cursor.execute(
-#         'SELECT id, name, username, email FROM users WHERE username = %s',
-#         (current_user,)
-#     )
-
-#     user = cursor.fetchone()
-
-#     cursor.close()
-#     conn.close()
-
-#     if user is None:
-#         print(f"User {current_user} not found in database.")
-#         return redirect(url_for('login'))
-    
-#     if _auth_header_is_bearer():
-#         return jsonify(user), 200
-
-#     print(f"User {current_user} accessed profile page.")
-#     return render_template('profile.html', user=user)
-
 @app.route('/forum')
 @jwt_required()
 def forum():
@@ -312,50 +235,6 @@ def forum():
         return jsonify(topics=topics), 200
 
     return render_template("forum.html", topics=topics)
-
-# @app.route('/forum')
-# @jwt_required()
-# def forum():
-#     """Forum route - returns JSON if API call, renders template if web page"""
-#     has_header = _auth_header_is_bearer()
-#     has_cookie = request.cookies.get('access_token')
-
-#     if has_header or has_cookie:
-#         # API call or web with cookie
-#         try:
-#             get_jwt_identity()  # Just to verify token
-#         except Exception as e:
-#             app.logger.debug(f'JWT identity error in /forum: {e}')
-#             if has_header:
-#                 return jsonify(error='Invalid token'), 401
-#             else:
-#                 return redirect(url_for('login'))
-#         conn = get_db_connection()
-#         if conn is None:
-#             if has_header:
-#                 return jsonify(error='Database connection failed'), 500
-#             else:
-#                 flash('Database connection failed.')
-#                 return render_template('forum.html')
-#         try:
-#             cursor = conn.cursor(dictionary=True)
-#             cursor.execute('SELECT * FROM topics')
-#             topics = cursor.fetchall()
-#         finally:
-#             try:
-#                 cursor.close()
-#             except:
-#                 pass
-#             conn.close()
-
-#         if has_header:
-#             return jsonify(topics=topics), 200
-#         else:
-#             return render_template('forum.html', topics=topics)
-#     else:
-#         # Web page load without token
-#         return redirect(url_for('login'))
-
 
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
 @jwt_required()
@@ -417,58 +296,6 @@ def new_post(topic_id):
             flash('Fel vid skapande av inlägg.', 'danger')
             return redirect(url_for('open_topic', topic_id=topic_id))
     return render_template('new_post.html', topic_id=topic_id)
-
-# @app.route('/forum/topic/<int:topic_id>')
-# def open_topic(topic_id):
-#     """Topic route - returns JSON if API call, renders template if web page"""
-#     has_header = _auth_header_is_bearer()
-#     has_cookie = request.cookies.get('access_token')
-
-#     if has_header or has_cookie:
-#         # API call or web with cookie
-#         try:
-#             get_jwt_identity()  # Just to verify token
-#         except Exception as e:
-#             app.logger.debug(f'JWT identity error in /forum/topic: {e}')
-#             if has_header:
-#                 return jsonify(error='Invalid token'), 401
-#             else:
-#                 return redirect(url_for('login'))
-#         conn = get_db_connection()
-#         if conn is None:
-#             if has_header:
-#                 return jsonify(error='Database connection failed'), 500
-#             else:
-#                 flash('Database connection failed.')
-#                 return render_template('open_topic.html', topic_id=topic_id)
-#         try:
-#             cursor = conn.cursor(dictionary=True)
-#             cursor.execute('SELECT * FROM topics WHERE id = %s', (topic_id,))
-#             topic = cursor.fetchone()
-            
-#             if topic is None:
-#                 if has_header:
-#                     return jsonify(error='Topic not found'), 404
-#                 else:
-#                     flash('Topic not found.')
-#                     return redirect(url_for('forum'))
-            
-#             cursor.execute('SELECT * FROM posts WHERE topic_id = %s ORDER BY datum ASC', (topic_id,))
-#             posts = cursor.fetchall()
-#         finally:
-#             try:
-#                 cursor.close()
-#             except:
-#                 pass
-#             conn.close()
-        
-#         if has_header:
-#             return jsonify(topic=topic, posts=posts), 200
-#         else:
-#             return render_template('open_topic.html', topic=topic, posts=posts)
-#     else:
-#         # Web page load without token
-#         return redirect(url_for('login'))
 
 @app.route('/forum/topic/<int:topic_id>')
 @jwt_required()
