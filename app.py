@@ -12,27 +12,34 @@ from flask_socketio import *
 
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
+app.secret_key = 'super_secret_key@£$€{--![]}'
+
+# os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
 
 # Gör all kod i jinja mallar till text istället vör kod. Förhindrar XSS attacker
 # Det undviker att användarinmatning som innehåller HTML eller JavaScript körs i webbläsaren
 app.jinja_env.autoescape = True  
 
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'super-secret-key')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=10000)
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'
+# os.environ.get('JWT_SECRET_KEY', 'super-secret-key')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=100)
 
-app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
-app.config['JWT_COOKIE_NAME'] = 'access_token'
-
+app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token_cookie"
+app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
 app.config["JWT_COOKIE_SECURE"] = False
 app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+
+# VIKTIGT
+app.config["JWT_COOKIE_DOMAIN"] = None
 
 jwt = JWTManager(app)
 
-socketio = SocketIO(app)
-
 # Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
 limiter.init_app(app)
+
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # MySQL configuration
 DB_CONFIG = {
@@ -146,7 +153,13 @@ def login():
     # Web login
     response = make_response(redirect(url_for("profile")))
     set_access_cookies(response, access_token)
+    return response
 
+@app.route("/test_login")
+def test_login():
+    token = create_access_token(identity="test")
+    response = jsonify({"msg": "cookie set"})
+    set_access_cookies(response, token)
     return response
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -196,8 +209,13 @@ def logout():
 def profile():
 
     current_user = get_jwt_identity()
+    print("JWT user:", current_user)
 
     conn = get_db_connection()
+
+    if conn is None:
+        return "Database connection failed"
+
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute(
@@ -207,16 +225,42 @@ def profile():
 
     user = cursor.fetchone()
 
+    print("DB user:", user)
+
     cursor.close()
     conn.close()
 
     if not user:
-        return redirect(url_for("login"))
-
-    if request.is_json:
-        return jsonify(user), 200
+        return "User not found in database"
 
     return render_template("profile.html", user=user)
+
+# @app.route('/profile')
+# @jwt_required()
+# def profile():
+
+#     current_user = get_jwt_identity()
+
+#     conn = get_db_connection()
+#     cursor = conn.cursor(dictionary=True)
+
+#     cursor.execute(
+#         "SELECT id, name, username, email FROM users WHERE username = %s",
+#         (current_user,)
+#     )
+
+#     user = cursor.fetchone()
+
+#     cursor.close()
+#     conn.close()
+
+#     if not user:
+#         return redirect(url_for("login"))
+
+#     if request.is_json:
+#         return jsonify(user), 200
+
+#     return render_template("profile.html", user=user)
 
 @app.route('/forum')
 @jwt_required()
