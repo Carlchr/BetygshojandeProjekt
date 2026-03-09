@@ -66,22 +66,18 @@ def protected():
     print(get_jwt())
     return jsonify(logged_in_as=current_user), 200
 
-@app.route('/trigger-500')
-def trigger_500():
-    """Route that intentionally triggers a 500 error by dividing by zero"""
-    app.logger.warning('Someone accessed the /trigger-500 route')
-    # This will cause a ZeroDivisionError and trigger our 500 error handler
-    result = 1 / 0
-    return f"This should never be reached: {result}"
-
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     """Custom 404 error handler"""
     app.logger.warning(f'{error} error: {request.url} not found')
-    
-    # it is posible to render a template and return a status code other than 200
     return render_template('errors/404.html'), 404 # 404 is the status code for not found errors
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    """Custom 429 error handler"""
+    app.logger.warning(f'Rate limit exceeded: {e}')
+    return render_template('errors/429.html'), 429 
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -93,13 +89,7 @@ def internal_error(error):
 def handle_exception(error):
     """Handle any unhandled exceptions"""
     app.logger.error(f'Unhandled exception: {error}', exc_info=True)
-    return render_template('errors/500.html')
-
-@app.errorhandler(429)
-def ratelimit_handler(e):
-    """Custom 429 error handler"""
-    app.logger.warning(f'Rate limit exceeded: {e}')
-    return render_template('errors/429.html'), 429 
+    return render_template('errors/500.html'), 500
 
 @app.route('/')
 def index():
@@ -123,15 +113,21 @@ def login():
     else:
         username = request.form.get("username")
         password = request.form.get("password")
+    
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "Database connection failed"}), 500
 
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    cursor = conn.cursor(dictionary=True)
+    sql = "SELECT * FROM users WHERE username = %s"
+    cursor.execute(sql, (username, ))
     user = cursor.fetchone()
 
     cursor.close()
     conn.close()
+
+    access_token = create_access_token(identity=username)
 
     if not user or not check_password_hash(user['password'], password):
 
@@ -140,8 +136,6 @@ def login():
         else:
             flash("Invalid username or password", "danger")
             return render_template("login.html")
-
-    access_token = create_access_token(identity=user["username"])
 
     # API login
     if api_request:
