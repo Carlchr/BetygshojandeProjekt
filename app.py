@@ -22,7 +22,7 @@ app.jinja_env.autoescape = True
 
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 # os.environ.get('JWT_SECRET_KEY', 'super-secret-key')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=100)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 
 app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token_cookie"
@@ -95,66 +95,71 @@ def handle_exception(error):
 def index():
     return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST', 'GET'])
 @limiter.limit("50/minute")
 def login():
+    try:
+        if request.method == 'GET':
+            return render_template('login.html')
+        
+        if request.method == 'POST':
+            # avgör om det är API eller web
+            api_request = request.is_json
 
-    #Om det är en GET request, rendera login sidan igen
-    if request.method == "GET":
-        return render_template("login.html")
+            if api_request:
+                data = request.get_json()
+                username = data.get("username")
+                password = data.get("password")
+            else:
+                username = request.form.get("username")
+                password = request.form.get("password")
+            
 
-    # avgör om det är API eller web
-    api_request = request.is_json
+            conn = get_db_connection()
+            if not conn:
+                app.logger.error("Database connection failed")
+                return jsonify({"error": "Database connection failed"}), 500
 
-    if api_request:
-        data = request.get_json()
-        username = data.get("username")
-        password = data.get("password")
-    else:
-        username = request.form.get("username")
-        password = request.form.get("password")
-    
+            cursor = conn.cursor(dictionary=True)
+            sql = "SELECT * FROM users WHERE username = %s AND password IS NOT NULL"
+            cursor.execute(sql, (username, ))
+            user = cursor.fetchone()
 
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
+            cursor.close()
+            conn.close()
 
-    cursor = conn.cursor(dictionary=True)
-    sql = "SELECT * FROM users WHERE username = %s"
-    cursor.execute(sql, (username, ))
-    user = cursor.fetchone()
+            access_token = create_access_token(identity=username)
 
-    cursor.close()
-    conn.close()
+            if not user or not check_password_hash(user['password'], password):
 
-    access_token = create_access_token(identity=username)
+                if api_request:
+                    return jsonify({"error": "Invalid username or password"}), 401
+                else:
+                    flash("Invalid username or password", "danger")
+                    return render_template("login.html")
 
-    if not user or not check_password_hash(user['password'], password):
+            # API login
+            if api_request:
+                return jsonify({
+                    "access_token": access_token,
+                    "username": username
+                }), 200
 
-        if api_request:
-            return jsonify({"error": "Invalid username or password"}), 401
+            # Web login
+            response = make_response(redirect(url_for("profile")))
+            set_access_cookies(response, access_token)
+            return response
+    except Exception as e:
+        app.logger.error(f"Error during login: {e}", exc_info=True)
+
+        if request.is_json:
+            return jsonify({"error": "An error occurred during login"}), 500
         else:
-            flash("Invalid username or password", "danger")
+            flash("An error occurred during login", "danger")
+            # use the template name, not the URL, otherwise Jinja will try to load a file
+            # literally named "/login" which doesn't exist and triggers a 500
             return render_template("login.html")
 
-    # API login
-    if api_request:
-        return jsonify({
-            "access_token": access_token,
-            "username": user["username"]
-        }), 200
-
-    # Web login
-    response = make_response(redirect(url_for("profile")))
-    set_access_cookies(response, access_token)
-    return response
-
-@app.route("/test_login")
-def test_login():
-    token = create_access_token(identity="test")
-    response = jsonify({"msg": "cookie set"})
-    set_access_cookies(response, token)
-    return response
 
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("10/hour")  # Förhindra brute-force registreringar
@@ -229,33 +234,6 @@ def profile():
 
     return render_template("profile.html", user=user)
 
-# @app.route('/profile')
-# @jwt_required()
-# def profile():
-
-#     current_user = get_jwt_identity()
-
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
-
-#     cursor.execute(
-#         "SELECT id, name, username, email FROM users WHERE username = %s",
-#         (current_user,)
-#     )
-
-#     user = cursor.fetchone()
-
-#     cursor.close()
-#     conn.close()
-
-#     if not user:
-#         return redirect(url_for("login"))
-
-#     if request.is_json:
-#         return jsonify(user), 200
-
-#     return render_template("profile.html", user=user)
-
 @app.route('/forum')
 @jwt_required()
 def forum():
@@ -314,14 +292,16 @@ def new_post(topic_id):
             cursor = conn.cursor(dictionary=True)
             cursor.execute('SELECT id FROM topics WHERE id = %s', (topic_id,))
             topic = cursor.fetchone()
+            cursor.close()
             if topic is None:
                 flash('Tråden existerar inte.', 'danger')
+                conn.close()
                 return redirect(url_for('forum'))
-        finally:
-            try:
-                cursor.close()
-            except:
-                pass
+        except Exception as e:
+            flash('Fel vid validering av tråd.', 'danger')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('forum'))
         
         try:
             cursor = conn.cursor()
@@ -332,6 +312,8 @@ def new_post(topic_id):
             return redirect(url_for('open_topic', topic_id=topic_id))
         except Exception as e:
             flash('Fel vid skapande av inlägg.', 'danger')
+            cursor.close()
+            conn.close()
             return redirect(url_for('open_topic', topic_id=topic_id))
     return render_template('new_post.html', topic_id=topic_id)
 
@@ -344,13 +326,16 @@ def open_topic(topic_id):
 
     cursor.execute("SELECT * FROM topics WHERE id = %s", (topic_id,))
     topic = cursor.fetchone()
+    cursor.close()
 
     if not topic:
+        conn.close()
         if request.is_json:
             return jsonify({"error": "Topic not found"}), 404
         flash("Topic not found")
         return redirect(url_for("forum"))
 
+    cursor = conn.cursor(dictionary=True)
     cursor.execute(
         "SELECT * FROM posts WHERE topic_id = %s ORDER BY datum ASC",
         (topic_id,)
