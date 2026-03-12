@@ -12,9 +12,7 @@ from flask_socketio import *
 
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key@£$€{--![]}'
-
-# os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
+app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
 
 # Gör all kod i jinja mallar till text istället vör kod. Förhindrar XSS attacker
 # Det undviker att användarinmatning som innehåller HTML eller JavaScript körs i webbläsaren
@@ -27,6 +25,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token_cookie"
 app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
+
 app.config["JWT_COOKIE_SECURE"] = False
 app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 app.config["JWT_COOKIE_SAMESITE"] = "Lax"
@@ -94,6 +93,11 @@ def handle_exception(error):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@socketio.on('connect')
+def handle_connect(username):
+    print(f"User connected", request.sid)
+    emit("user_connected", broadcast=True)
 
 @app.route('/login', methods=['POST', 'GET'])
 @limiter.limit("50/minute")
