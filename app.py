@@ -20,19 +20,12 @@ app.secret_key = 'super_secret_key@£$€{--![]}'
 # Det undviker att användarinmatning som innehåller HTML eller JavaScript körs i webbläsaren
 app.jinja_env.autoescape = True  
 
-app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-# os.environ.get('JWT_SECRET_KEY', 'super-secret-key')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
-
-app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
-app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token_cookie"
-app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
-app.config["JWT_COOKIE_SECURE"] = False
-app.config["JWT_COOKIE_CSRF_PROTECT"] = False
-app.config["JWT_COOKIE_SAMESITE"] = "Lax"
-
-# VIKTIGT
-app.config["JWT_COOKIE_DOMAIN"] = None
+app.config.update({
+    'JWT_SECRET_KEY': 'super-secret-key',  # MÅSTE finnas för att signera tokens
+    'JWT_ACCESS_TOKEN_EXPIRES': timedelta(days=30),
+    'JWT_TOKEN_LOCATION': ['cookies'],      # MÅSTE finnas - du använder set_access_cookies()
+    'JWT_COOKIE_SECURE': False,             # MÅSTE False för development (localhost HTTP)
+})
 
 jwt = JWTManager(app)
 
@@ -44,8 +37,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # MySQL configuration
 DB_CONFIG = {
     'host': 'localhost',
-    'user': 'root',  # replace with your MySQL username
-    'password': '',  # replace with your MySQL password
+    'user': 'root',  
+    'password': '',  
     'database': 'forum_db'
 }
 
@@ -64,7 +57,7 @@ def protected():
     current_user = get_jwt_identity()
     # Det här är för att visa att vi kan hämta hela JWT payloaden
     print(get_jwt())
-    return jsonify(logged_in_as=current_user), 200
+    return jsonify(logged_in_as=current_user), 201
 
 # Error handlers
 @app.errorhandler(404)
@@ -88,7 +81,7 @@ def internal_error(error):
 @app.errorhandler(Exception)
 def handle_exception(error):
     """Handle any unhandled exceptions"""
-    app.logger.error(f'Unhandled exception: {error}', exc_info=True)
+    app.logger.error(f'Unhandled exception: {error}')
     return render_template('errors/500.html'), 500
 
 @app.route('/')
@@ -143,7 +136,7 @@ def login():
                 return jsonify({
                     "access_token": access_token,
                     "username": username
-                }), 200
+                }), 201
 
             # Web login
             response = make_response(redirect(url_for("profile")))
