@@ -2,21 +2,15 @@ import os
 from flask import Flask, render_template, request, session, flash, redirect, url_for, jsonify
 import mysql.connector
 from mysql.connector import Error
-from requests import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_socketio import SocketIO
 from safety import limiter
-from flask_socketio import *
-from error import *
+from flask_socketio import emit
+from error import *  # Importera alla error handlers från error.py
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
 
-# Gör all kod i jinja mallar till text istället vör kod. Förhindrar XSS attacker
-# Det undviker att användarinmatning som innehåller HTML eller JavaScript körs i webbläsaren
-app.jinja_env.autoescape = True  
-
-session = Session()
 # Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
 limiter.init_app(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -38,8 +32,8 @@ def get_db_connection():
         return None
     
 @socketio.on('connect')
-def handle_connect(username):
-    print(f"User connected", request.sid)
+def handle_connect():
+    print("User connected", request.sid)
     emit("user_connected", broadcast=True)
 
 @app.route('/')
@@ -76,8 +70,8 @@ def login():
                 flash("Invalid username or password", "danger")
                 return render_template("login.html")
 
-
-            return render_template("profile.html", user=user)
+            session["username"] = user["username"]
+            return redirect(url_for("profile"))
     except Exception as e:
         app.logger.error(f"Error during login: {e}", exc_info=True)
         flash("An error occurred during login", "danger")
@@ -131,11 +125,15 @@ def profile():
     if conn is None:
         return "Database connection failed"
 
+    if "username" not in session:
+        return redirect(url_for("login"))
+
     cursor = conn.cursor(dictionary=True)
+    username = session.get('username')
 
     cursor.execute(
         "SELECT id, name, username, email FROM users WHERE username = %s",
-        (user,)
+        (username,)
     )
 
     user = cursor.fetchone()
