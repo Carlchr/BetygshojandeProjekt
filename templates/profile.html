@@ -2,16 +2,23 @@
 {% block customtitle %} Profile Page {% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1>Profile Page</h1>
-    {% if user %}
-        <p>Welcome, {{ user.name }}!</p>
+    <div class="container mt-5">
+        <h1>Profile Page</h1>
+        {% if user %}
+            <p>Welcome, {{ user.name }}!</p>
+            <br><hr><br>
+            <p style="color: rgb(6, 10, 5); font-weight: bold;"> Current Userdata; </p>
+            <p>Name: {{ user.name }}</p>
+            <p>Username: {{ user.username }}</p>
+            <p>Email: {{ user.email }}</p>
+        {% else %}
+            <p>Not logged in. <a href="/login">Login here</a></p>
+        {% endif %}
         <br><hr><br>
-        <p>Name: {{ user.name }}</p>
-        <p>Username: {{ user.username }}</p>
-        <p>Email: {{ user.email }}</p>
-    {% else %}
-        <p>Not logged in. <a href="/login">Login here</a></p>
-    {% endif %}
-</div>
+        <form method="put">
+            <label for="username">Nytt användarnamn:</label>
+            <input type="text" id="username" name="username" required><br><br>
+            <input type="submit" value="Uppdatera Profil">
+        </form>
+    </div>
 {% endblock %}

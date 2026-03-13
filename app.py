@@ -36,6 +36,9 @@ def get_db_connection():
         print(f"Fel vid anslutning till MySQL: {e}")
         return None
     
+def is_valid_user_data():
+    return session.get('username') and session.get('name') and session.get('email')
+
 @socketio.on('connect')
 def handle_connect():
     print("User connected", request.sid)
@@ -99,7 +102,6 @@ def register():
         hashed_password = generate_password_hash(password)
         
         try:
-        
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (name, username, email, password) VALUES (%s, %s, %s, %s)', (name, username, email, hashed_password))
@@ -124,7 +126,6 @@ def logout():
 
 @app.route('/profile')
 def profile():
-
     conn = get_db_connection()
 
     if conn is None:
@@ -135,14 +136,11 @@ def profile():
 
     cursor = conn.cursor(dictionary=True)
     username = session.get('username')
-
     cursor.execute(
-        "SELECT id, name, username, email FROM users WHERE username = %s",
-        (username,)
+        "SELECT id, name, username, email FROM users WHERE username = %s",(username,)
     )
 
     user = cursor.fetchone()
-
     print("DB user:", user)
 
     cursor.close()
@@ -150,8 +148,39 @@ def profile():
 
     if not user:
         return "User not found in database"
-
     return render_template("profile.html", user=user)
+
+@app.route('/profile', methods=['PUT'])
+def update_user(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    # 1. Hämta data från body (req.body)
+
+    try:
+        username = session.get('username')
+        password = session.get('password')
+        name = session.get('name')
+        email = session.get('email')
+    except Exception as e: 
+        return print({"error": "Ogiltig data"}), 422
+
+    hashed_password = generate_password_hash(password)
+
+    # skapa databaskoppling (kod bortklippt) och använd UPDATE för att uppdatera databasen
+    sql = """UPDATE users SET username = %s, password = %s, name = %s, email = %s WHERE id = %s"""
+   
+    # 3. Kör frågan med en tupel av värden
+    cursor.execute(sql, (username, hashed_password, name, email, user_id))
+   
+    conn.commit()
+    # Kontrollera om någon rad faktiskt uppdaterades
+    if cursor.rowcount == 0: 
+        return print({"error": "Användaren hittades inte"}), 404
+    
+    cursor.close()
+    conn.close()
+    return render_template(url_for("profile"))
+
 
 @app.route('/forum')
 def forum():
