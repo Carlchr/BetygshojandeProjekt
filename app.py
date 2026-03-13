@@ -261,6 +261,10 @@ def open_topic(topic_id):
 
     return render_template("open_topic.html", topic=topic, posts=posts)
 
+@app.route('/realtidschatt')
+def realtidschatt():
+    return render_template("realtidschatt.html")
+
 if __name__ == '__main__':
     # Use SocketIO runner 
     socketio.run(app, debug=True, port=5500)
