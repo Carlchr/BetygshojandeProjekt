@@ -19,6 +19,13 @@
     <body>
         <header>
             <h1>{% block title %}Jeffs Och Elias Hemsida{% endblock %}</h1>
+            <div class="login">
+                {% if current_user %}
+                    <p style="color: rgb(6, 10, 5); font-weight: bold;">Inloggad som: {{ current_user }}</p>
+                {% else %}
+                    <p style="color: rgb(206, 20, 20);">Inte inloggad</p>
+                {% endif %}
+            </div>
             <nav>
                 <ul>
                     <strong>

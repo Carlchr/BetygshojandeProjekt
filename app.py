@@ -15,6 +15,11 @@ app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}'
 limiter.init_app(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# Gör "current_user" tillgänglig i alla mallar så att vi kan visa inloggningsstatus, ilket visas i headern
+@app.context_processor
+def inject_user():
+    return {'current_user': session.get('username')}
+
 # MySQL configuration
 DB_CONFIG = {
     'host': 'localhost',
