@@ -1,15 +1,13 @@
 import os
-from flask import *
+from flask import Flask, render_template, request, session, flash, redirect, url_for, jsonify
 import mysql.connector
 from mysql.connector import Error
-from werkzeug.security import *
-from functools import *
+from requests import Session
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_socketio import SocketIO
 from safety import limiter
-from flask_jwt_extended import *
-from datetime import timedelta 
 from flask_socketio import *
-
+from error import *
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
@@ -18,18 +16,9 @@ app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}'
 # Det undviker att användarinmatning som innehåller HTML eller JavaScript körs i webbläsaren
 app.jinja_env.autoescape = True  
 
-app.config.update({
-    'JWT_SECRET_KEY': 'super-secret-key',  # MÅSTE finnas för att signera tokens
-    'JWT_ACCESS_TOKEN_EXPIRES': timedelta(days=30),
-    'JWT_TOKEN_LOCATION': ['cookies'],      # MÅSTE finnas - du använder set_access_cookies()
-    'JWT_COOKIE_SECURE': False,             # MÅSTE False för development (localhost HTTP)
-})
-
-jwt = JWTManager(app)
-
+session = Session()
 # Sätter in "rate limitern" in i "app.py" så att den faktiskt kan införa "limits" (vid /login t.ex)
 limiter.init_app(app)
-
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # MySQL configuration
@@ -48,48 +37,14 @@ def get_db_connection():
         print(f"Fel vid anslutning till MySQL: {e}")
         return None
     
-@app.route('/protected', methods=['GET'])
-@jwt_required()
-def protected():
-    # Hämta identity från JWT, i det här fallet användarnamnet som vi satte som identity när vi skapade token
-    current_user = get_jwt_identity()
-    # Det här är för att visa att vi kan hämta hela JWT payloaden
-    print(get_jwt())
-    return jsonify(logged_in_as=current_user), 201
-
-# Error handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    """Custom 404 error handler"""
-    app.logger.warning(f'{error} error: {request.url} not found')
-    return render_template('errors/404.html'), 404 # 404 is the status code for not found errors
-
-@app.errorhandler(429)
-def ratelimit_handler(e):
-    """Custom 429 error handler"""
-    app.logger.warning(f'Rate limit exceeded: {e}')
-    return render_template('errors/429.html'), 429 
-
-@app.errorhandler(500)
-def internal_error(error):
-    """Custom 500 error handler"""
-    app.logger.error(f'Internal server error: {error}')
-    return render_template('errors/500.html'), 500 # 500 is the status code for internal server error
-
-@app.errorhandler(Exception)
-def handle_exception(error):
-    """Handle any unhandled exceptions"""
-    app.logger.error(f'Unhandled exception: {error}')
-    return render_template('errors/500.html'), 500
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
 @socketio.on('connect')
 def handle_connect(username):
     print(f"User connected", request.sid)
     emit("user_connected", broadcast=True)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/login', methods=['POST', 'GET'])
 @limiter.limit("50/minute")
@@ -99,16 +54,8 @@ def login():
             return render_template('login.html')
         
         if request.method == 'POST':
-            # avgör om det är API eller web
-            api_request = request.is_json
-
-            if api_request:
-                data = request.get_json()
-                username = data.get("username")
-                password = data.get("password")
-            else:
-                username = request.form.get("username")
-                password = request.form.get("password")
+            username = request.form.get("username")
+            password = request.form.get("password")
             
 
             conn = get_db_connection()
@@ -124,37 +71,19 @@ def login():
             cursor.close()
             conn.close()
 
-            access_token = create_access_token(identity=username)
 
-            if not user or not check_password_hash(user['password'], password):
+            if not user or not check_password_hash(user['password'], password):        
+                flash("Invalid username or password", "danger")
+                return render_template("login.html")
 
-                if api_request:
-                    return jsonify({"error": "Invalid username or password"}), 401
-                else:
-                    flash("Invalid username or password", "danger")
-                    return render_template("login.html")
 
-            # API login
-            if api_request:
-                return jsonify({
-                    "access_token": access_token,
-                    "username": username
-                }), 201
-
-            # Web login
-            response = make_response(redirect(url_for("profile")))
-            set_access_cookies(response, access_token)
-            return response
+            return render_template("profile.html", user=user)
     except Exception as e:
         app.logger.error(f"Error during login: {e}", exc_info=True)
-
-        if request.is_json:
-            return jsonify({"error": "An error occurred during login"}), 500
-        else:
-            flash("An error occurred during login", "danger")
-            # use the template name, not the URL, otherwise Jinja will try to load a file
-            # literally named "/login" which doesn't exist and triggers a 500
-            return render_template("login.html")
+        flash("An error occurred during login", "danger")
+        # use the template name, not the URL, otherwise Jinja will try to load a file
+        # literally named "/login" which doesn't exist and triggers a 500
+        return render_template("login.html")
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -190,21 +119,12 @@ def register():
 @app.route('/logout')
 def logout():
     """User logout route"""
-    if request.headers.get('Authorization'):
-        # API logout
-        return jsonify(success=True), 200
-    else:
-        # Web logout
-        response = redirect(url_for('index'))
-        unset_jwt_cookies(response)
-        return response
+    session.clear()  # Rensa sessionen för att logga ut användaren
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/profile')
-@jwt_required()
 def profile():
-
-    current_user = get_jwt_identity()
-    print("JWT user:", current_user)
 
     conn = get_db_connection()
 
@@ -215,7 +135,7 @@ def profile():
 
     cursor.execute(
         "SELECT id, name, username, email FROM users WHERE username = %s",
-        (current_user,)
+        (user,)
     )
 
     user = cursor.fetchone()
@@ -231,7 +151,6 @@ def profile():
     return render_template("profile.html", user=user)
 
 @app.route('/forum')
-@jwt_required()
 def forum():
 
     conn = get_db_connection()
@@ -243,18 +162,14 @@ def forum():
     cursor.close()
     conn.close()
 
-    if request.is_json:
-        return jsonify(topics=topics), 200
-
     return render_template("forum.html", topics=topics)
 
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
-@jwt_required()
 def new_topic():
     """Route for creating a new forum topic"""
     if request.method == 'POST':
         title = request.form['title']
-        username = get_jwt_identity()
+        username = session.get('username')
         conn = get_db_connection()
         if conn is None:
             flash('Databasanslutning misslyckades. Försök igen senare.')
@@ -272,12 +187,11 @@ def new_topic():
     return render_template('new_topic.html')
 
 @app.route('/forum/new_post/<int:topic_id>', methods=['GET', 'POST'])
-@jwt_required()
 def new_post(topic_id):
     """Route for creating a new post in a forum topic"""
     if request.method == 'POST':
         content = request.form['content']
-        username = get_jwt_identity()
+        username = session.get('username')
         conn = get_db_connection()
         if conn is None:
             flash('Databasanslutning misslyckades. Försök igen senare.')
@@ -314,7 +228,6 @@ def new_post(topic_id):
     return render_template('new_post.html', topic_id=topic_id)
 
 @app.route('/forum/topic/<int:topic_id>')
-@jwt_required()
 def open_topic(topic_id):
 
     conn = get_db_connection()
@@ -326,8 +239,6 @@ def open_topic(topic_id):
 
     if not topic:
         conn.close()
-        if request.is_json:
-            return jsonify({"error": "Topic not found"}), 404
         flash("Topic not found")
         return redirect(url_for("forum"))
 
