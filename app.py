@@ -20,6 +20,10 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 def inject_user():
     return {'current_user': session.get('username')}
 
+@app.context_processor
+def inject_user_to_js():
+    return {'current_user': session.get('username')}
+
 # MySQL configuration
 DB_CONFIG = {
     'host': 'localhost',
