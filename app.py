@@ -119,12 +119,15 @@ def register():
             flash('Error creating account.', 'danger')
     return render_template('register.html')
 
-@app.route('/logout')
+@app.route('/logout', methods = ['POST'])
 def logout():
     """User logout route"""
-    session.clear()  # Rensa sessionen för att logga ut användaren
+    
+    session.clear()
     flash('You have been logged out.', 'success')
-    return redirect(url_for('index'))
+    return render_template(url_for('index'))
+
+
 
 @app.route('/profile')
 def profile():
