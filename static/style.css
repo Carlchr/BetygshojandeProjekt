@@ -1,16 +1,40 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color:aliceblue;
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
 }
 
+body {
+    background-color:aliceblue;
+    transition: background-color 0.3s, color 0.3s;
+    color: black;
+}
+footer {
+    /* 007bff */
+    background-color: cornflowerblue;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
 header {
     background-color: cornflowerblue;
     color: white;
     padding: 10px 0;
     text-align: center;
 }
+.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+.grey-mode {
+    background-color: #5a5a5a;
+    color: #ffffff;
+}
+
 
 nav a {
     color: white;
@@ -32,16 +56,7 @@ h1, h2, h3 {
     color: #333;
 }
 
-footer {
-    /* 007bff */
-    background-color: cornflowerblue;
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-}
+
 
 footer p {
     margin: 0;

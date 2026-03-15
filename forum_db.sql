@@ -89,7 +89,13 @@ INSERT INTO `users` (`id`, `name`, `username`, `email`, `password`) VALUES
 --
 -- Index för dumpade tabeller
 --
-
+CREATE TABLE likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT,
+    username VARCHAR(50),
+    likes INT(50),
+    UNIQUE(post_id, username)
+);
 --
 -- Index för tabell `posts`
 --

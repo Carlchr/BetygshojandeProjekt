@@ -91,7 +91,6 @@ def login():
         # literally named "/login" which doesn't exist and triggers a 500
         return render_template("login.html")
 
-
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("10/hour")  # Förhindra brute-force registreringar
 def register():
@@ -121,15 +120,13 @@ def register():
             flash('Error creating account.', 'danger')
     return render_template('register.html')
 
-@app.route('/logout', methods = ['POST'])
+@app.route('/logout', methods = ['GET', 'POST'])
 def logout():
     """User logout route"""
     
     session.clear()
     flash('You have been logged out.', 'success')
-    return render_template(url_for('index'))
-
-
+    return redirect(url_for('index'))
 
 @app.route('/profile')
 def profile():
@@ -157,37 +154,33 @@ def profile():
         return "User not found in database"
     return render_template("profile.html", user=user)
 
-@app.route('/profile', methods=['PUT'])
-def update_user(user_id):
+@app.route('/profile', methods=['POST'])
+def update_user():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     # 1. Hämta data från body (req.body)
-
-    try:
-        username = session.get('username')
-        password = session.get('password')
-        name = session.get('name')
-        email = session.get('email')
-    except Exception as e: 
-        return print({"error": "Ogiltig data"}), 422
-
-    hashed_password = generate_password_hash(password)
-
+    new_username = request.form.get('username')
+    username = session.get('username')
+   
+    if not username or not new_username:
+        return {"error": "Ingen session"}, 401
+    
     # skapa databaskoppling (kod bortklippt) och använd UPDATE för att uppdatera databasen
-    sql = """UPDATE users SET username = %s, password = %s, name = %s, email = %s WHERE id = %s"""
+    sql = """UPDATE users SET username = %s WHERE username = %s"""
    
     # 3. Kör frågan med en tupel av värden
-    cursor.execute(sql, (username, hashed_password, name, email, user_id))
-   
+    cursor.execute(sql, (new_username, username))
+    
     conn.commit()
     # Kontrollera om någon rad faktiskt uppdaterades
     if cursor.rowcount == 0: 
         return print({"error": "Användaren hittades inte"}), 404
     
+    session["username"] = new_username  # Uppdatera sessionen med det nya användarnamnet
+
     cursor.close()
     conn.close()
-    return render_template(url_for("profile"))
-
+    return redirect(url_for("profile"))
 
 @app.route('/forum')
 def forum():
@@ -296,6 +289,81 @@ def open_topic(topic_id):
         return jsonify(topic=topic, posts=posts), 200
 
     return render_template("open_topic.html", topic=topic, posts=posts)
+
+@app.route('/forum/topic/like_post/<int:post_id>', methods=['POST'])
+def like_post(post_id):
+
+    username = session.get("username")
+
+    if not username:
+        return {"error": "Not logged in"}, 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "INSERT INTO likes (post_id, username) VALUES (%s, %s)",
+            (post_id, username)
+        )
+        conn.commit()
+
+    except mysql.connector.IntegrityError:
+        flash("You have already liked this post.", "danger")
+        return redirect(request.referrer)
+
+    cursor.close()
+    conn.close()
+
+    return redirect(request.referrer)
+
+@app.route('/forum/topic/dislike_post/<int:post_id>', methods=['POST'])
+def dislike_post(post_id):
+
+    username = session.get("username")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        "DELETE FROM likes WHERE post_id = %s AND username = %s",
+        (post_id, username)
+    )
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return redirect(request.referrer)
+
+@app.route('/forum/topic/delete_post/<int:post_id>', methods=['POST'])
+def delete_post(post_id):
+
+    username = session.get("username")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT username, topic_id FROM posts WHERE id = %s", (post_id,))
+    post = cursor.fetchone()
+
+    if not post:
+        return {"error": "Post not found"}, 404
+
+    if post["username"] != username:
+        return {"error": "Not allowed"}, 403
+
+    cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
+    conn.commit()
+
+    topic_id = post["topic_id"]
+
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for("open_topic", topic_id=topic_id))
 
 @app.route('/realtidschatt')
 def realtidschatt():

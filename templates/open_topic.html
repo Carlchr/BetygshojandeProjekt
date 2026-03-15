@@ -14,7 +14,20 @@
     <div class="post-card">
         <br>
         <p class="post-meta"><strong>{{ post.username }}</strong> -- Skapad {{ post.datum }}</p>
-        <p>{{ post.inlägg }}</p>
+        <p>{{ post.inlägg }} 
+            || {{ likes.likes }}
+            <form action="/forum/topic/like_post/{{ post.id }}" method="POST">
+            <button>Like</button>
+            </form>
+
+            <form action="/forum/topic/dislike_post/{{ post.id }}" method="POST">
+            <button>Dislike</button>
+            </form>
+
+            <form action="/forum/topic/delete_post/{{ post.id }}" method="POST">
+            <button>Delete</button>
+            </form>
+        </p>
     
     </div>
 {% endfor %}
