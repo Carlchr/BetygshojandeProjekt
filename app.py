@@ -354,6 +354,8 @@ def delete_post(post_id):
 
     if post["username"] != username:
         return {"error": "Not allowed"}, 403
+    elif session.get("username") == "admin":
+        pass
 
     cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
     conn.commit()
