@@ -4,14 +4,20 @@
 {% block content %}
     <h2>Välkommen till Jeffs Och Elias Hemsida!</h2>
     <p>Detta är startsidan för vårt forum där du kan delta i diskussioner och interagera med andra användare.</p>
+
+    
+    {% if current_name == "rotj" %}
+        <img src="/static/pictures/rotj.jpg" alt="Return Of the Jedi" class="rotj-image">
+    {% else %}
+        <p>Du är inte inloggad. <a href="/login">Logga in här</a> eller <a href="/register">registrera dig</a> för att delta i forumet.</p>
+    {% endif %}
+
 {% endblock %}
 
 
 <!-- Göra:
-- Implementera en sökfunktion för att hitta trådar och inlägg 
+- Implementera en sökfunktion för att hitta trådar 
 - Profilbilder - Najs typ
-- Administratörsverktyg för att hantera användare och innehåll - Krav
 - Visa när någon skriver - Svår
 - Nya inlägg dyker upp utan refresh
-- Sök efter trådar
 -->

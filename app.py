@@ -1,3 +1,4 @@
+from functools import wraps
 import os
 from flask import Flask, render_template, request, session, flash, redirect, url_for, jsonify
 import mysql.connector
@@ -18,7 +19,18 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Gör "current_user" tillgänglig i alla mallar så att vi kan visa inloggningsstatus, ilket visas i headern
 @app.context_processor
 def inject_user():
-    return {'current_user': session.get('username')}
+    username = session.get('username')
+    if not username:
+        return {'current_user': None, 'current_name': None}
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT name FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    return {'current_user': username, 'current_name': user['name'] if user else None}
 
 @app.context_processor
 def inject_user_to_js():
@@ -32,6 +44,7 @@ DB_CONFIG = {
     'database': 'forum_db'
 }
 
+# Funktioner
 def get_db_connection():
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
@@ -43,15 +56,34 @@ def get_db_connection():
 def is_valid_user_data():
     return session.get('username') and session.get('name') and session.get('email')
 
+def login_required(func):
+    """
+    Middleware-decorator som skyddar routes genom att kontrollera användarautentisering.
+    """
+    @wraps(func) # Bevarar ursprunglig funktions metadata
+    def decorated_function(*args, **kwargs):
+        # Kontrollera om 'user'-nyckeln finns i sessionen
+        if 'user' not in session:
+            # Användaren är inte inloggad - omdirigera till inloggningssidan
+            return redirect(url_for('login_page'))
+       
+        # Användaren är autentiserad - fortsätt till den skyddade routen
+        return func(*args, **kwargs)
+   
+    return decorated_function
+
+# SocketIO event handlers
 @socketio.on('connect')
 def handle_connect():
     print("User connected", request.sid)
     emit("user_connected", broadcast=True)
 
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# Route för inloggning, både GET och POST
 @app.route('/login', methods=['POST', 'GET'])
 @limiter.limit("50/minute")
 def login():
@@ -91,6 +123,7 @@ def login():
         # literally named "/login" which doesn't exist and triggers a 500
         return render_template("login.html")
 
+# Route för registrering, både GET och POST
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("10/hour")  # Förhindra brute-force registreringar
 def register():
@@ -120,6 +153,7 @@ def register():
             flash('Error creating account.', 'danger')
     return render_template('register.html')
 
+# Route för utloggning
 @app.route('/logout', methods = ['GET', 'POST'])
 def logout():
     """User logout route"""
@@ -128,6 +162,7 @@ def logout():
     flash('You have been logged out.', 'success')
     return redirect(url_for('index'))
 
+# Route för profil, både GET och POST (för uppdatering)
 @app.route('/profile')
 def profile():
     conn = get_db_connection()
@@ -154,6 +189,7 @@ def profile():
         return "User not found in database"
     return render_template("profile.html", user=user)
 
+# Route för att uppdatera användarprofilen
 @app.route('/profile', methods=['POST'])
 def update_user():
     conn = get_db_connection()
@@ -182,6 +218,7 @@ def update_user():
     conn.close()
     return redirect(url_for("profile") )
 
+# Route för forumet
 @app.route('/forum')
 def forum():
 
@@ -196,6 +233,7 @@ def forum():
 
     return render_template("forum.html", topics=topics)
 
+# Route för att skapa en ny tråd i forumet
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
 def new_topic():
     """Route for creating a new forum topic"""
@@ -218,6 +256,7 @@ def new_topic():
             flash('Fel vid skapande av tråd.', 'danger')
     return render_template('new_topic.html')
 
+# Route för att skapa ett nytt inlägg i en tråd
 @app.route('/forum/new_post/<int:topic_id>', methods=['GET', 'POST'])
 def new_post(topic_id):
     """Route for creating a new post in a forum topic"""
@@ -259,6 +298,7 @@ def new_post(topic_id):
             return redirect(url_for('open_topic', topic_id=topic_id))
     return render_template('new_post.html', topic_id=topic_id)
 
+# Route för att öppna en tråd och visa alla inlägg i den
 @app.route('/forum/topic/<int:topic_id>')
 def open_topic(topic_id):
 
@@ -296,6 +336,7 @@ def open_topic(topic_id):
 
     return render_template("open_topic.html", topic=topic, posts=posts), 200
 
+# Route för att gilla ett inlägg
 @app.route('/forum/topic/like_post/<int:post_id>', methods=['POST'])
 def like_post(post_id):
 
@@ -323,6 +364,7 @@ def like_post(post_id):
 
     return redirect(request.referrer)
 
+# Route för att ta bort like från ett inlägg
 @app.route('/forum/topic/dislike_post/<int:post_id>', methods=['POST'])
 def dislike_post(post_id):
 
@@ -344,6 +386,7 @@ def dislike_post(post_id):
 
     return redirect(request.referrer)
 
+# Route för att ta bort ett inlägg, endast av admin eller den som skrev inlägget
 @app.route('/forum/topic/delete_post/<int:post_id>', methods=['POST'])
 def delete_post(post_id):
 
@@ -377,6 +420,7 @@ def delete_post(post_id):
 
     return redirect(url_for("open_topic", topic_id=topic_id))
 
+# Route för adminpanelen
 @app.route('/admin')
 def admin():
 
@@ -402,6 +446,7 @@ def admin():
 
     return render_template("admin.html", users=users)
 
+# Route för att ta bort en användare, endast av admin
 @app.route('/admin/delete_user/<username>', methods=['POST'])
 def delete_user(username):
 
@@ -430,6 +475,7 @@ def delete_user(username):
     flash("User deleted successfully.", "success")
     return redirect(url_for("index"))
 
+# Route för realtidschatt
 @app.route('/realtidschatt')
 def realtidschatt():
     return render_template("realtidschatt.html")

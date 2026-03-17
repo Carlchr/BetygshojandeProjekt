@@ -27,14 +27,20 @@ header {
     text-align: center;
 }
 .dark-mode {
-    background-color: #121212;
+    background-color: #373737;
     color: #ffffff;
 }
 .grey-mode {
-    background-color: #5a5a5a;
+    background-color: #000000;
     color: #ffffff;
 }
-
+img.rotj-image {
+    display: block;
+    margin: 20px auto;
+    max-width: 100%;
+    width: 50rem;
+    height: auto;
+}
 
 nav a {
     color: white;

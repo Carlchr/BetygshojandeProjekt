@@ -14,6 +14,12 @@
 
     <br><hr><br>
 
+    <p>Expriment sökfält</p>
+    <form action="{{ url_for('search') }}" method="GET">
+        <input type="text" name="query" placeholder="Sök efter trådar...">
+        <button type="submit">Sök</button>
+    </form>
+
     {% for topic in topics %}
         <div class="thread-card">
             <br><h3><a href="{{ url_for('open_topic', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3><br>
