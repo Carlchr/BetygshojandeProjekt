@@ -9,17 +9,19 @@
         <button type="button">New topic</button>
     </a>
 <div class="forum-list">
-    <p>Realtidschatt</p>
-    <h3><a href="{{ url_for('realtidschatt') }}">chatt</a></h3>
+    <br><p><strong> Realtidschatt</strong></p>
+    <h3><a href="{{ url_for('realtidschatt') }}">Chatt</a></h3>
 
     <br><hr><br>
 
     {% for topic in topics %}
         <div class="thread-card">
-            <h3><a href="{{ url_for('open_topic', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3>
+            <br><h3><a href="{{ url_for('open_topic', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3><br>
+
 
             <p class="thread-meta">
-                Skapad av <strong>{{ topic.username }}</strong>
+                <p>Innehåll: {{ topic.innehall }}</p>
+                <strong>Skapad av: </strong> {{ topic.username }}
             </p>
         </div>
     {% else %}
