@@ -13,9 +13,9 @@
 {% for post in posts %}
     <div class="post-card">
         <br>
-        <p class="post-meta"><strong>{{ post.username }}</strong> -- Skapad {{ post.datum }}</p>
-        <p>{{ post.inlägg }} 
-            || {{ likes.likes }}
+        <p class="post-meta"><strong>{{ post.username }}</strong> || Skapad {{ post.datum }} || Likes: {{ post.likes_count }}</p>
+        <p>{{ post.inlägg }}
+            
             <form action="/forum/topic/like_post/{{ post.id }}" method="POST">
             <button>Like</button>
             </form>

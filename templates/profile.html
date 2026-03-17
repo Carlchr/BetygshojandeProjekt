@@ -22,7 +22,12 @@
         </form>
     </div>
 
+
     <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+
+    {% if user.role == 'admin' %}
+        <a href="{{ url_for('admin') }}" class="admin-panel-link">Admin Panel</a>
+    {% endif %}
 
     <script src="static/js/main.js"></script>
 

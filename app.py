@@ -141,7 +141,7 @@ def profile():
     cursor = conn.cursor(dictionary=True)
     username = session.get('username')
     cursor.execute(
-        "SELECT id, name, username, email FROM users WHERE username = %s",(username,)
+        "SELECT * FROM users WHERE username = %s",(username,)
     )
 
     user = cursor.fetchone()
@@ -180,7 +180,7 @@ def update_user():
 
     cursor.close()
     conn.close()
-    return redirect(url_for("profile"))
+    return redirect(url_for("profile") )
 
 @app.route('/forum')
 def forum():
@@ -282,13 +282,19 @@ def open_topic(topic_id):
 
     posts = cursor.fetchall()
 
+    for post in posts:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM likes WHERE post_id = %s",
+            (post["id"],)
+        )
+        result = cursor.fetchone()
+        post["likes_count"] = result[0]
+
     cursor.close()
     conn.close()
 
-    if request.is_json:
-        return jsonify(topic=topic, posts=posts), 200
-
-    return render_template("open_topic.html", topic=topic, posts=posts)
+    return render_template("open_topic.html", topic=topic, posts=posts), 200
 
 @app.route('/forum/topic/like_post/<int:post_id>', methods=['POST'])
 def like_post(post_id):
@@ -349,13 +355,17 @@ def delete_post(post_id):
     cursor.execute("SELECT username, topic_id FROM posts WHERE id = %s", (post_id,))
     post = cursor.fetchone()
 
+    cursor.execute("SELECT role FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+
     if not post:
         return {"error": "Post not found"}, 404
 
-    if post["username"] != username:
-        return {"error": "Not allowed"}, 403
-    elif session.get("username") == "admin":
+    if user["role"] == "admin":
         pass
+    elif post["username"] != username:
+        return {"error": "Not allowed"}, 403
+    
 
     cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
     conn.commit()
@@ -366,6 +376,59 @@ def delete_post(post_id):
     conn.close()
 
     return redirect(url_for("open_topic", topic_id=topic_id))
+
+@app.route('/admin')
+def admin():
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    username = session.get('username')
+    cursor.execute("SELECT role FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+
+    if user["role"] != "admin":
+        flash("Access denied: Admins only", "danger")
+        return redirect(url_for("index"))
+
+    cursor.execute("SELECT id, name, username, email, role FROM users")
+    users = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("admin.html", users=users)
+
+@app.route('/admin/delete_user/<username>', methods=['POST'])
+def delete_user(username):
+
+    # Kontrollera att användaren är inloggad
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    #Hämta den inloggade användarens roll
+    cursor.execute("SELECT role FROM users WHERE username = %s", (session.get('username'),))
+    user = cursor.fetchone()
+
+    # Kontrollera om användaren är admin, isåfall nekas radering
+    if user["role"] != "admin":
+        flash("Access denied: Admins only", "danger")
+        return redirect(url_for("index"))
+
+    cursor.execute("DELETE FROM users WHERE username = %s", (username,))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    flash("User deleted successfully.", "success")
+    return redirect(url_for("index"))
 
 @app.route('/realtidschatt')
 def realtidschatt():

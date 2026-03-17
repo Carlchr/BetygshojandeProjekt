@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block customtitle %} Home Page {% endblock %}
+
+{% block content %}
+    <h2>Admin Panel</h2>
+    <p>Här kan administratörer hantera användare och innehåll på forumet.</p> <br>  
+    <h3>User Management</h3>
+
+    <p>User Id - Username - Name - Email - Role</p>
+
+    <br><hr><br>
+
+    {% for user in users %}
+        <p>{{ user.id }} - {{ user.username }} - {{ user.name }} - {{ user.email }} - {{ user.role }} - <form style="display: inline;" action="/admin/delete_user/{{ user.username }}" method="post"><input type="submit" value="Ta bort användare"></form></p>
+    {% endfor %}
+
+    <a href="{{ url_for('index') }}">Tillbaka till huvudsidan</a>
+
+{% endblock %}
