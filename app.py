@@ -80,12 +80,13 @@ def handle_connect():
 
 # Routes
 @app.route('/')
+@limiter.limit("20/minute")
 def index():
     return render_template('index.html')
 
 # Route för inloggning, både GET och POST
 @app.route('/login', methods=['POST', 'GET'])
-@limiter.limit("50/minute")
+@limiter.limit("10/minute")
 def login():
     try:
         if request.method == 'GET':
@@ -114,7 +115,7 @@ def login():
 
             session["username"] = user["username"]
             return redirect(url_for("profile"))
-    except Exception as e:
+    except Error as e:
         app.logger.error(f"Error during login: {e}", exc_info=True)
         flash("An error occurred during login", "danger")
         # use the template name, not the URL, otherwise Jinja will try to load a file
@@ -153,6 +154,7 @@ def register():
 
 # Route för utloggning
 @app.route('/logout', methods = ['GET', 'POST'])
+@login_required
 def logout():
     """User logout route"""
     
@@ -162,6 +164,7 @@ def logout():
 
 # Route för profil, både GET och POST (för uppdatering)
 @app.route('/profile')
+@login_required
 def profile():
     conn = get_db_connection()
 
@@ -189,6 +192,7 @@ def profile():
 
 # Route för att uppdatera användarprofilen
 @app.route('/profile', methods=['POST'])
+@login_required
 def update_user():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -218,6 +222,7 @@ def update_user():
 
 # Route för forumet
 @app.route('/forum')
+@login_required
 def forum():
 
     conn = get_db_connection()
@@ -232,6 +237,7 @@ def forum():
     return render_template("forum.html", topics=topics)
 
 @app.route('/search')
+@login_required
 def search():
     #Args används pga get
     searchInfo = request.args.get("searchInfo")  # Hämta från GET-parametern
@@ -259,6 +265,7 @@ def search():
 
 # Route för att skapa en ny tråd i forumet
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
+@login_required
 def new_topic():
     """Route for creating a new forum topic"""
     if request.method == 'POST':
@@ -276,12 +283,13 @@ def new_topic():
             conn.close()
             flash('Tråd skapad!', 'success')
             return redirect(url_for('forum'))
-        except Exception as e:
+        except Error:
             flash('Fel vid skapande av tråd.', 'danger')
     return render_template('new_topic.html')
 
 # Route för att skapa ett nytt inlägg i en tråd
 @app.route('/forum/new_post/<int:topic_id>', methods=['GET', 'POST'])
+@login_required
 def new_post(topic_id):
     """Route for creating a new post in a forum topic"""
     if request.method == 'POST':
@@ -302,7 +310,7 @@ def new_post(topic_id):
                 flash('Tråden existerar inte.', 'danger')
                 conn.close()
                 return redirect(url_for('forum'))
-        except Exception as e:
+        except Error:
             flash('Fel vid validering av tråd.', 'danger')
             cursor.close()
             conn.close()
@@ -315,7 +323,7 @@ def new_post(topic_id):
             cursor.close()
             conn.close()
             return redirect(url_for('open_topic', topic_id=topic_id))
-        except Exception as e:
+        except Error:
             flash('Fel vid skapande av inlägg.', 'danger')
             cursor.close()
             conn.close()
@@ -324,6 +332,7 @@ def new_post(topic_id):
 
 # Route för att öppna en tråd och visa alla inlägg i den
 @app.route('/forum/topic/<int:topic_id>')
+@login_required
 def open_topic(topic_id):
 
     conn = get_db_connection()
@@ -362,6 +371,7 @@ def open_topic(topic_id):
 
 # Route för att gilla ett inlägg
 @app.route('/forum/topic/like_post/<int:post_id>', methods=['POST'])
+@login_required
 def like_post(post_id):
 
     username = session.get("username")
@@ -390,6 +400,7 @@ def like_post(post_id):
 
 # Route för att ta bort like från ett inlägg
 @app.route('/forum/topic/dislike_post/<int:post_id>', methods=['POST'])
+@login_required
 def dislike_post(post_id):
 
     username = session.get("username")
@@ -412,6 +423,7 @@ def dislike_post(post_id):
 
 # Route för att ta bort ett inlägg, endast av admin eller den som skrev inlägget
 @app.route('/forum/topic/delete_post/<int:post_id>', methods=['POST'])
+@login_required
 def delete_post(post_id):
 
     username = session.get("username")
@@ -446,6 +458,7 @@ def delete_post(post_id):
 
 # Route för adminpanelen
 @app.route('/admin')
+@login_required
 def admin():
 
     if "username" not in session:
@@ -472,6 +485,7 @@ def admin():
 
 # Route för att ta bort en användare, endast av admin
 @app.route('/admin/delete_user/<username>', methods=['POST'])
+@login_required
 def delete_user(username):
 
     # Kontrollera att användaren är inloggad
@@ -501,6 +515,7 @@ def delete_user(username):
 
 # Route för realtidschatt
 @app.route('/realtidschatt')
+@login_required
 def realtidschatt():
     return render_template("realtidschatt.html")
 
