@@ -14,6 +14,14 @@
         <p>Välkommen tillbaka, {{ current_user }}! <a href="/forum"> Gå till forumet </a> för att delta i diskussionerna.</p>
     {% endif %}
 
+    <!-- TradingView Widget BEGIN -->
+<div class="tradingview-widget-container">
+  <div class="tradingview-widget-container__widget"></div>
+  <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank"><span class="blue-text">World markets</span></a> by TradingView</div>
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async></script>
+</div>
+<!-- TradingView Widget END -->
+
 {% endblock %}
 
 
