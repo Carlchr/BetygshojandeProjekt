@@ -18,43 +18,48 @@
     </head>
     <body>
         <header>
-            <h1>{% block title %}Jeffs Och Elias Hemsida{% endblock %}</h1>
-            <div class="login">
-                {% if current_user %}
-                    <p style="color: rgb(6, 10, 5); font-weight: bold;">{{ current_user }}</p>
-                {% else %}
-                    <p style="color: rgb(107, 4, 4); font-weight: bold;">Inte inloggad</p>
-                {% endif %}
-            </div>
-            <nav>
-                <ul>
-                    <strong>
-                    <li><a href="/">Hem</a></li>
-                    <li><a href="/forum">Forum</a></li>
-                    <li><a href="/profile">Profil</a></li>
+            <div class="header-inner container">
+                <div class="brand">
+                    <h1>{% block title %}Jeffs Och Elias Hemsida{% endblock %}</h1>
+                    <p class="tagline">Forum för diskussioner och samarbete</p>
+                </div>
 
-                    <!-- Om man är inloggad kan man inte logga in igen, om man inte är det kan man endast det, inte logga ut -->
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="/">Hem</a></li>
+                        <li><a href="/forum">Forum</a></li>
+                        <li><a href="/profile">Profil</a></li>
+                        {% if current_user %}
+                            <li><a class="btn-ghost" href="/logout">Logga ut</a></li>
+                        {% else %}
+                            <li><a class="btn" href="/login">Logga in</a></li>
+                            <li><a class="btn" href="/register">Registrera</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+
+                <div class="user-status">
                     {% if current_user %}
-                        <li><a href="/logout">Logga ut</a></li>
+                        <span class="user-badge">Inloggad som <strong>{{ current_user }}</strong></span>
                     {% else %}
-                        <li><a href="/login">Logga in</a></li>
-                        <li><a href="/register">Registrera</a></li>
+                        <span class="user-badge user-badge--offline">Inte inloggad</span>
                     {% endif %}
-                    </strong>
-                </ul>
-            </nav>
+                </div>
+            </div>
         </header>
         
-        <main>
+        <main class="container">
             {% block content %}
 
-            {% with messages = get_flashed_messages()%}
-                {% if messages%}
-                    {% for message in messages%}
-                        <p>{{message}}</p>
-                    {%endfor%}
-                {%endif%}
-            {%endwith%}
+            {% with messages = get_flashed_messages(with_categories=true)%}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
 
             <!-- Innehåll Här -->
             {% endblock %}

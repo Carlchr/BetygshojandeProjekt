@@ -153,3 +153,156 @@ form input[type="submit"]:hover {
     font-size: 0.9em;
     margin-top: 10px;
 }
+
+/* ---------- Design enhancements ---------- */
+:root {
+    --primary: #2b6aff;
+    --primary-dark: #1f4ecc;
+    --panel: rgba(255, 255, 255, 0.9);
+    --shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    --border: rgba(31, 42, 58, 0.12);
+    --radius: 14px;
+}
+
+body {
+    background: linear-gradient(135deg, #e9f2ff 0%, #ffffff 100%);
+    color: #1f2a3a;
+    min-height: 100vh;
+}
+
+header {
+    background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+    color: white;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+}
+
+.header-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 0;
+}
+
+.brand h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0.25rem;
+}
+
+.tagline {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.main-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+}
+
+.main-nav a {
+    color: white;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+
+.main-nav a:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.user-badge--offline {
+    background: rgba(255, 255, 255, 0.12);
+    opacity: 0.9;
+}
+
+main {
+    padding: 3rem 0 5rem;
+}
+
+.flash-messages {
+    margin-bottom: 1.25rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.flash {
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.flash-success {
+    border-color: rgba(40, 167, 69, 0.3);
+    color: #1f5d32;
+}
+
+.flash-danger {
+    border-color: rgba(208, 69, 76, 0.3);
+    color: #5a1c1f;
+}
+
+.flash-info {
+    border-color: rgba(36, 123, 255, 0.3);
+    color: #0f2f64;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+footer {
+    background: rgba(35, 82, 186, 0.95);
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    padding: 1rem 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 5;
+}
+
+@media (max-width: 720px) {
+    .header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+
+    .main-nav ul {
+        gap: 0.4rem;
+    }
+
+    .user-status {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}

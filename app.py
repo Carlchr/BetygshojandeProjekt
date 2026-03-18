@@ -119,7 +119,7 @@ def login():
         app.logger.error(f"Error during login: {e}", exc_info=True)
         flash("An error occurred during login", "danger")
         # use the template name, not the URL, otherwise Jinja will try to load a file
-        # literally named "/login" which doesn't exist and triggers an error
+        # literally named "/login" which doesn't exist and triggers a 500
         return render_template("login.html")
 
 # Route för registrering, både GET och POST
@@ -187,7 +187,7 @@ def profile():
     conn.close()
 
     if not user:
-        return flash("User not found in database")
+        return "User not found in database"
     return render_template("profile.html", user=user)
 
 # Route för att uppdatera användarprofilen
@@ -201,7 +201,7 @@ def update_user():
     username = session.get('username')
    
     if not username or not new_username:
-        return flash("error: Ingen session", 401)
+        return {"error": "Ingen session"}, 401
     
     # skapa databaskoppling (kod bortklippt) och använd UPDATE för att uppdatera databasen
     sql = """UPDATE users SET username = %s WHERE username = %s"""
@@ -212,7 +212,7 @@ def update_user():
     conn.commit()
     # Kontrollera om någon rad faktiskt uppdaterades
     if cursor.rowcount == 0: 
-        return flash({"error": "Användaren hittades inte"}), 404
+        return print({"error": "Användaren hittades inte"}), 404
     
     session["username"] = new_username  # Uppdatera sessionen med det nya användarnamnet
 
@@ -258,7 +258,7 @@ def search():
     conn.close()
 
     if not topic:
-        flash("Ingen tråd matchade din sökning.", "info")
+        print("Ingen tråd matchade din sökning.", "info")
         return redirect(url_for("forum"))
 
     return redirect(url_for("open_topic", topic_id=topic["id"]))
@@ -438,12 +438,12 @@ def delete_post(post_id):
     user = cursor.fetchone()
 
     if not post:
-        return flash("error: Post not found", 404)
+        return {"error": "Post not found"}, 404
 
     if user["role"] == "admin":
         pass
     elif post["username"] != username:
-        return flash("error: Not allowed", 403)
+        return {"error": "Not allowed"}, 403
     
 
     cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
