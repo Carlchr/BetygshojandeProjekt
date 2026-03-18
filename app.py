@@ -63,7 +63,7 @@ def login_required(func):
     @wraps(func) # Bevarar ursprunglig funktions metadata
     def decorated_function(*args, **kwargs):
         # Kontrollera om 'user'-nyckeln finns i sessionen
-        if 'user' not in session:
+        if 'username' not in session:
             # Användaren är inte inloggad - omdirigera till inloggningssidan
             return redirect(url_for('login'))
        
