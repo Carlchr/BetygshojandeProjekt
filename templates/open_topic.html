@@ -7,28 +7,28 @@
 <a href="{{ url_for('forum') }}">Tillbaka till forumet</a>
 
     <a href="{{ url_for('new_post', topic_id=topic.id) }}" class="new-thread-btn">
-        <button type="button">New post</button>
+        <button type="button"> New post </button>
     </a>
 
 {% for post in posts %}
     <div class="post-card">
         <br>
         <p class="post-meta"><strong>{{ post.username }}</strong> || Skapad {{ post.datum }} || Likes: {{ post.likes_count }}</p>
-        <p>{{ post.inlägg }}
-            
+        <p class="post-body">{{ post.inlägg }}</p>
+
+        <div class="post-actions">
             <form action="/forum/topic/like_post/{{ post.id }}" method="POST">
-            <button>Like</button>
+                <button class="btn-like">Like</button>
             </form>
 
             <form action="/forum/topic/dislike_post/{{ post.id }}" method="POST">
-            <button>Dislike</button>
+                <button class="btn-dislike">Dislike</button>
             </form>
 
             <form action="/forum/topic/delete_post/{{ post.id }}" method="POST">
-            <button>Delete</button>
+                <button class="btn-delete">Delete</button>
             </form>
-        </p>
-    
+        </div>
     </div>
 {% endfor %}
 

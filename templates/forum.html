@@ -9,30 +9,30 @@
         <button type="button"> New topic </button>
     </a>
 
-<div class="forum-list">
-    <br><p><strong> Realtidschatt</strong></p>
-    <h3><a href="{{ url_for('realtidschatt') }}"> Chatt </a></h3>
+    <div class="forum-list">
+        <br><p><strong> Realtidschatt</strong></p>
+        <h3><a href="{{ url_for('realtidschatt') }}"> Chatt </a></h3>
 
-    <br><hr><br>
+        <br><hr><br>
 
-    <p> Sökfält </p>
-    <form action="{{ url_for('search') }}" method="GET">
-        <input type="text" name="searchInfo" placeholder="Sök efter trådar...">
-        <button type="submit"> Sök </button>
-    </form>
+        <p> Sökfält </p>
+        <form action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="searchInfo" placeholder="Sök efter trådar...">
+            <button type="submit"> Sök </button>
+        </form>
 
-    {% for topic in topics %}
-        <div class="thread-card">
-            <br><h3><a href="{{ url_for('open_topic', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3><br>
+        {% for topic in topics %}
+            <div class="thread-card">
+                <br><h3><a href="{{ url_for('open_topic', topic_id=topic.id) }}">{{ topic.rubrik }}</a></h3><br>
 
-            <p class="thread-meta">
-                <p> Innehåll: {{ topic.innehall }}</p>
-                <strong> Skapad av: </strong> {{ topic.username }}
-            </p>
-        </div>
-    {% else %}
-        <p>Inga trådar ännu.</p>
-    {% endfor %}
-</div>
+                <p class="thread-meta">
+                    <p> Innehåll: {{ topic.innehall }}</p>
+                    <strong> Skapad av: </strong> {{ topic.username }}
+                </p>
+            </div>
+        {% else %}
+            <p> Inga trådar ännu. </p>
+        {% endfor %}
+    </div>
 
 {% endblock %}

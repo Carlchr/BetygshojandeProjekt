@@ -270,13 +270,44 @@ main {
     color: #0f2f64;
 }
 
-.card {
+.card, .post-card {
     background: rgba(255, 255, 255, 0.92);
     border-radius: var(--radius);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
     border: 1px solid var(--border);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+}
+
+.post-meta {
+    color: rgba(47, 61, 79, 0.75);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.post-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.75rem;
+}
+
+.post-actions form {
+    margin: 0;
+}
+
+.btn-like, .btn-dislike, .btn-delete {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+}
+
+.btn-like:hover {
+    background-color: rgba(40, 167, 69, 0.9);
+}
+
+.btn-dislike:hover, .btn-delete:hover {
+    background-color: rgba(208, 69, 76, 0.9);
 }
 
 footer {
