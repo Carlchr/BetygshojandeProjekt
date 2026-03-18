@@ -4,11 +4,9 @@
 {% block content %}
 <h1>{{ topic.rubrik }}</h1>
 
-<a href="{{ url_for('forum') }}">Tillbaka till forumet</a>
+<a href="{{ url_for('forum') }}" class="btn-return">Tillbaka till forumet</a> <br><br>
 
-    <a href="{{ url_for('new_post', topic_id=topic.id) }}" class="new-thread-btn">
-        <button type="button"> New post </button>
-    </a>
+<a href="{{ url_for('new_post', topic_id=topic.id) }}" class="new-thread-btn"> <button type="button"> New post </button> </a> <br>
 
 {% for post in posts %}
     <div class="post-card">
