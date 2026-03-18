@@ -319,12 +319,12 @@ main {
     color: white;
     border-radius: 50px;
     font-weight: bold;
-    transition: background 0.2s ease;
     text-decoration: none;
 }
 
 .btn-return:hover {
     background-color: #1f4ecc;
+    transition: background 0.2s ease;
 }
 
 footer {

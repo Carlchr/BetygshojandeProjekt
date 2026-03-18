@@ -80,7 +80,6 @@ def handle_connect():
 
 # Routes
 @app.route('/')
-@limiter.limit("20/minute")
 def index():
     return render_template('index.html')
 

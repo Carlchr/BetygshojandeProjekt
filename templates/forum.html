@@ -2,20 +2,17 @@
 {% block customtitle %} Forum {% endblock %}
 
 {% block content %}
-    <h1>Forum</h1>
-    <p>This is the forum page.</p>
+    <h1>Forum sidan</h1>
+    <p> Det här är forum-sidan. </p><br>
     
-    <a href="{{ url_for('new_topic') }}" class="new-thread-btn">
-        <button type="button"> New topic </button>
-    </a>
+    <a href="{{ url_for('new_topic') }}" class="new-thread-btn"> <button type="button"> Nytt ämne </button> </a>
 
     <div class="forum-list">
-        <br><p><strong> Realtidschatt</strong></p>
-        <h3><a href="{{ url_for('realtidschatt') }}"> Chatt </a></h3>
+        <br><h3><a href="{{ url_for('realtidschatt') }}"> <p><strong> Realtidschatt </strong></p> </a></h3>
 
         <br><hr><br>
 
-        <p> Sökfält </p>
+        <h3><p><strong> Sökfält </strong></p></h3>
         <form action="{{ url_for('search') }}" method="GET">
             <input type="text" name="searchInfo" placeholder="Sök efter trådar...">
             <button type="submit"> Sök </button>
@@ -34,5 +31,4 @@
             <p> Inga trådar ännu. </p>
         {% endfor %}
     </div>
-
 {% endblock %}

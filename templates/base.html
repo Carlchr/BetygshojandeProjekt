@@ -66,41 +66,38 @@
         </main>
         
         <footer>
-            <p>&copy; 2026 Jeffs Och Elias Forum. Alla rättigheter förbehållna.</p>
+            <p>&copy; 2026 Jeffs Och Elias Forum (Te23D). Alla rättigheter förbehållna.</p>
         </footer>
 
         <script>
-        // only establish Socket.IO connection on pages where it's needed
-        if (!['/login','/register'].includes(window.location.pathname)) {
-            const socket = io();
+            // only establish Socket.IO connection on pages where it's needed
+            if (!['/login','/register'].includes(window.location.pathname)) {
+                const socket = io();
 
-            socket.on("connect", () => {
-                console.log("Connected to server");
+                socket.on("connect", () => {
+                    console.log("Connected to server");
+                });
+
+                socket.on("user_connected", () => {
+                    console.log("A user has connected");
+                });
+
+                socket.on('error', (err) => {
+                    console.warn('Socket error', err);
+                });
+            }
+        </script>
+
+        <script>
+            const input = document.getElementById("messageInput");
+            const button = document.getElementById("sendButton");
+
+            const username = "{{ current_user }}" || "Anonym"; // Använd "current_user" som är injicerad från Flask, eller "Anonym" om ingen är inloggad
+
+            button.addEventListener("click", () => {
+                chatt.innerText += `${username}: ${input.value}\n`;
+                input.value = "";
             });
-
-            socket.on("user_connected", () => {
-                console.log("A user has connected");
-            });
-
-            socket.on('error', (err) => {
-                console.warn('Socket error', err);
-            });
-        }
-
-        
-    </script>
-
-    <script>
-        const input = document.getElementById("messageInput");
-        const button = document.getElementById("sendButton");
-
-        const username = "{{ current_user }}" || "Anonym"; // Använd "current_user" som är injicerad från Flask, eller "Anonym" om ingen är inloggad
-
-        button.addEventListener("click", () => {
-            chatt.innerText += `${username}: ${input.value}\n`;
-            input.value = "";
-        });
-
-    </script>
+        </script>
     </body>
 </html>
