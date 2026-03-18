@@ -65,7 +65,7 @@ def login_required(func):
         # Kontrollera om 'user'-nyckeln finns i sessionen
         if 'user' not in session:
             # Användaren är inte inloggad - omdirigera till inloggningssidan
-            return redirect(url_for('login_page'))
+            return redirect(url_for('login'))
        
         # Användaren är autentiserad - fortsätt till den skyddade routen
         return func(*args, **kwargs)
@@ -86,7 +86,7 @@ def index():
 
 # Route för inloggning, både GET och POST
 @app.route('/login', methods=['POST', 'GET'])
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 def login():
     try:
         if request.method == 'GET':
@@ -154,7 +154,6 @@ def register():
 
 # Route för utloggning
 @app.route('/logout', methods = ['GET', 'POST'])
-@login_required
 def logout():
     """User logout route"""
     
