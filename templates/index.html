@@ -1,15 +1,17 @@
 {% extends "base.html" %}
-{% block customtitle %} Home Page {% endblock %}
+{% block customtitle %} Hem {% endblock %}
 
 {% block content %}
     <h2>Välkommen till Jeffs Och Elias Hemsida!</h2>
     <p>Detta är startsidan för vårt forum där du kan delta i diskussioner och interagera med andra användare.</p>
 
     
-    {% if current_name == "rotj" %}
+    {% if current_name == "rotj" or current_user == "rotj" %}
         <img src="/static/pictures/rotj.jpg" alt="Return Of the Jedi" class="rotj-image">
-    {% else %}
+    {% elif current_user is none %}
         <p>Du är inte inloggad. <a href="/login">Logga in här</a> eller <a href="/register">registrera dig</a> för att delta i forumet.</p>
+    {% elif current_user is not none %}
+        <p>Välkommen tillbaka, {{ current_user }}! <a href="/forum"> Gå till forumet </a> för att delta i diskussionerna.</p>
     {% endif %}
 
 {% endblock %}
