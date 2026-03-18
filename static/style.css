@@ -26,14 +26,6 @@ header {
     padding: 10px 0;
     text-align: center;
 }
-.dark-mode {
-    background-color: #373737;
-    color: #ffffff;
-}
-.grey-mode {
-    background-color: #000000;
-    color: #ffffff;
-}
 img.rotj-image {
     display: block;
     margin: 20px auto;

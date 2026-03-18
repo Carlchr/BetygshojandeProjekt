@@ -10,7 +10,7 @@
         <textarea id="content" name="content" rows="6" cols="50" required></textarea><br><br>
         
         <input type="submit" value="Skapa inlägg">
-        <a href="{{ url_for('open_thread', topic_id=topic_id) }}">Avbryt</a>
+        <a href="{{ url_for('open_topic', topic_id=topic_id) }}">Avbryt</a>
     </form>
 </div>
 {% endblock %}

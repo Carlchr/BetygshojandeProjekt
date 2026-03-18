@@ -21,7 +21,7 @@
             <h1>{% block title %}Jeffs Och Elias Hemsida{% endblock %}</h1>
             <div class="login">
                 {% if current_user %}
-                    <p style="color: rgb(6, 10, 5); font-weight: bold;">Inloggad som: {{ current_user }}</p>
+                    <p style="color: rgb(6, 10, 5); font-weight: bold;">{{ current_user }}</p>
                 {% else %}
                     <p style="color: rgb(107, 4, 4); font-weight: bold;">Inte inloggad</p>
                 {% endif %}
