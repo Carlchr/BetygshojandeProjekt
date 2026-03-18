@@ -52,7 +52,7 @@ def get_db_connection():
     except Error as e:
         print(f"Fel vid anslutning till MySQL: {e}")
         return None
-    
+
 def is_valid_user_data():
     return session.get('username') and session.get('name') and session.get('email')
 
@@ -95,7 +95,6 @@ def login():
         if request.method == 'POST':
             username = request.form.get("username")
             password = request.form.get("password")
-            
 
             conn = get_db_connection()
             if not conn:
@@ -109,7 +108,6 @@ def login():
 
             cursor.close()
             conn.close()
-
 
             if not user or not check_password_hash(user['password'], password):        
                 flash("Invalid username or password", "danger")
