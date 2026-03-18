@@ -155,6 +155,7 @@ form input[type="submit"]:hover {
 }
 
 /* ---------- Design enhancements ---------- */
+
 :root {
     --primary: #2b6aff;
     --primary-dark: #1f4ecc;
@@ -308,6 +309,22 @@ main {
 
 .btn-dislike:hover, .btn-delete:hover {
     background-color: rgba(208, 69, 76, 0.9);
+}
+
+.btn-return {
+    display: inline-block;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.9rem;
+    background-color: #2b6aff;
+    color: white;
+    border-radius: 50px;
+    font-weight: bold;
+    transition: background 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-return:hover {
+    background-color: #1f4ecc;
 }
 
 footer {

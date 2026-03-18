@@ -30,7 +30,7 @@
                         <li><a href="/forum">Forum</a></li>
                         <li><a href="/profile">Profil</a></li>
                         {% if current_user %}
-                            <li><a class="btn-ghost" href="/logout">Logga ut</a></li>
+                            <li><a class="btn" href="/logout">Logga ut</a></li>
                         {% else %}
                             <li><a class="btn" href="/login">Logga in</a></li>
                             <li><a class="btn" href="/register">Registrera</a></li>
@@ -40,9 +40,9 @@
 
                 <div class="user-status">
                     {% if current_user %}
-                        <span class="user-badge">Inloggad som <strong>{{ current_user }}</strong></span>
+                        <span class="user-badge"><strong> Inloggad som {{ current_user }} </strong></span>
                     {% else %}
-                        <span class="user-badge user-badge--offline">Inte inloggad</span>
+                        <span class="user-badge user-badge--offline"> Inte inloggad </span>
                     {% endif %}
                 </div>
             </div>
