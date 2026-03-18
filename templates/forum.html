@@ -14,11 +14,12 @@
 
     <br><hr><br>
 
-    <p>Expriment sökfält</p>
+    <p>Sökfält</p>
     <form action="{{ url_for('search') }}" method="GET">
-        <input type="text" name="query" placeholder="Sök efter trådar...">
+        <input type="text" name="searchInfo" placeholder="Sök efter trådar...">
         <button type="submit">Sök</button>
     </form>
+
 
     {% for topic in topics %}
         <div class="thread-card">

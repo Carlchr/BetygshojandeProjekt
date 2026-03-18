@@ -233,6 +233,32 @@ def forum():
 
     return render_template("forum.html", topics=topics)
 
+@app.route('/search')
+def search():
+    #Args används pga get
+    searchInfo = request.args.get("searchInfo")  # Hämta från GET-parametern
+    
+    #Om inget skrevs i sökfältet, skicka tillbaka till forumet med en flash message
+    if not searchInfo:
+        flash("Skriv något att söka efter.", "info")
+        return redirect(url_for("forum"))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    sql = "SELECT id FROM topics WHERE rubrik LIKE %s"
+    cursor.execute(sql, (f"%{searchInfo}%",))#Ska vara en string, så därför krävs en f string, annars är det endast värdet från sökfältet.
+    topic = cursor.fetchone()  # Hämta första träffen
+    
+    cursor.close()
+    conn.close()
+
+    if not topic:
+        print("Ingen tråd matchade din sökning.", "info")
+        return redirect(url_for("forum"))
+
+    return redirect(url_for("open_topic", topic_id=topic["id"]))
+
 # Route för att skapa en ny tråd i forumet
 @app.route('/forum/new_topic', methods=['GET', 'POST'])
 def new_topic():
