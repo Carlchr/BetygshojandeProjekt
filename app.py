@@ -501,10 +501,16 @@ def delete_user(username):
     cursor.execute("SELECT role FROM users WHERE username = %s", (session.get('username'),))
     user = cursor.fetchone()
 
+    cursor.execute("SELECT role FROM users WHERE username = %s", (username,))
+    user_to_delete = cursor.fetchone()
+
     # Kontrollera om användaren är admin, isåfall nekas radering
     if user["role"] != "admin":
         flash("Access denied: Admins only", "danger")
         return redirect(url_for("index"))
+    elif user_to_delete["role"] == "admin":
+        flash("Cannot delete another admin.", "danger")
+        return redirect(url_for("admin"))
 
     cursor.execute("DELETE FROM users WHERE username = %s", (username,))
     conn.commit()
