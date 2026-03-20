@@ -435,14 +435,18 @@ def delete_post(post_id):
     cursor.execute("SELECT role FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
 
+    cursor.close()
+    conn.close()
+
     if not post:
-        return {"error": "Post not found"}, 404
+        flash("Post not found.", "danger")
+        return redirect(url_for("index"))
 
     if user["role"] == "admin":
         pass
     elif post["username"] != username:
-        return {"error": "Not allowed"}, 403
-    
+        flash("Not allowed to delete this post.", "danger")
+        return redirect(url_for("open_topic", topic_id=post["topic_id"]))
 
     cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
     conn.commit()
