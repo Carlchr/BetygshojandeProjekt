@@ -20,12 +20,10 @@
             <input type="text" id="username" name="username" required><br><br>
             <input type="submit" value="Uppdatera Profil">
         </form>
+        {% if user.role == 'admin' %}
+            <a href="{{ url_for('admin') }}" class="btn-return"> Admin Panel </a>
+        {% endif %}
     </div>
-
-    {% if user.role == 'admin' %}
-        <a href="{{ url_for('admin') }}" class="admin-panel-link">Admin Panel</a>
-    {% endif %}
-
     <script src="static/js/main.js"></script>
 
 {% endblock %}
