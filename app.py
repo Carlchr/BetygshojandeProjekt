@@ -79,11 +79,14 @@ def handle_connect():
     emit("user_connected", broadcast=True)
 
 # Routes
+# Hem-route: visar startsidan
 @app.route('/')
 def index():
     return render_template('index.html')
 
 # Route för inloggning, både GET och POST
+# GET: visa formulär
+# POST: autentisera, skapa session
 @app.route('/login', methods=['POST', 'GET'])
 @limiter.limit("20/minute")
 def login():
@@ -122,6 +125,8 @@ def login():
         return render_template("login.html")
 
 # Route för registrering, både GET och POST
+# GET: visa registreringsformulär
+# POST: skapa användare i databasen
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("10/hour")  # Förhindra brute-force registreringar
 def register():
@@ -152,6 +157,7 @@ def register():
     return render_template('register.html')
 
 # Route för utloggning
+# Tar bort sessionen och skickar tillbaka till startsidan
 @app.route('/logout', methods = ['GET', 'POST'])
 def logout():
     """User logout route"""
@@ -160,7 +166,8 @@ def logout():
     flash('You have been logged out.', 'success')
     return redirect(url_for('index'))
 
-# Route för profil, både GET och POST (för uppdatering)
+# Route för att visa användarprofil
+# Kräver inloggning (login_required decorator)
 @app.route('/profile')
 @login_required
 def profile():
@@ -189,6 +196,7 @@ def profile():
     return render_template("profile.html", user=user)
 
 # Route för att uppdatera användarprofilen
+# POST: uppdaterar användarnamn och session
 @app.route('/profile', methods=['POST'])
 @login_required
 def update_user():
@@ -218,7 +226,8 @@ def update_user():
     conn.close()
     return redirect(url_for("profile") )
 
-# Route för forumet
+# Route för forumöversikten
+# Visar alla trådar
 @app.route('/forum')
 @login_required
 def forum():
@@ -234,6 +243,8 @@ def forum():
 
     return render_template("forum.html", topics=topics)
 
+# Route för sökning i trådlistan
+# GET-parameter searchInfo används för LIKE-sökning
 @app.route('/search')
 @login_required
 def search():
@@ -439,6 +450,7 @@ def delete_post(post_id):
     conn.close()
 
     if not post:
+<<<<<<< Updated upstream
         flash("Post not found.", "danger")
         return redirect(url_for("index"))
 
@@ -447,6 +459,13 @@ def delete_post(post_id):
     elif post["username"] != username:
         flash("Not allowed to delete this post.", "danger")
         return redirect(url_for("open_topic", topic_id=post["topic_id"]))
+=======
+        return {"error": "Post not found"}, 404
+    if user["role"] == "admin":
+        pass
+    elif post["username"] != username:
+        return {"error": "Not allowed"}, 403
+>>>>>>> Stashed changes
 
     cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
     conn.commit()
@@ -459,6 +478,7 @@ def delete_post(post_id):
     return redirect(url_for("open_topic", topic_id=topic_id))
 
 # Route för adminpanelen
+# Visas endast för admin-användare
 @app.route('/admin')
 @login_required
 def admin():
@@ -486,6 +506,7 @@ def admin():
     return render_template("admin.html", users=users)
 
 # Route för att ta bort en användare, endast av admin
+# POST: utför radering av användare i DB, kräver admin-roll
 @app.route('/admin/delete_user/<username>', methods=['POST'])
 @login_required
 def delete_user(username):
@@ -522,6 +543,7 @@ def delete_user(username):
     return redirect(url_for("index"))
 
 # Route för realtidschatt
+# Visar WebSocket-chattvy
 @app.route('/realtidschatt')
 @login_required
 def realtidschatt():
