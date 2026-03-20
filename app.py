@@ -379,6 +379,7 @@ def open_topic(topic_id):
     return render_template("open_topic.html", topic=topic, posts=posts), 200
 
 # Route för att gilla ett inlägg
+# Om redan likeat: ta bort like (toggle behavior)
 @app.route('/forum/topic/like_post/<int:post_id>', methods=['POST'])
 @login_required
 def like_post(post_id):
@@ -389,45 +390,76 @@ def like_post(post_id):
         return {"error": "Not logged in"}, 401
 
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT * FROM likes WHERE post_id = %s AND username = %s",
+        (post_id, username)
+    )
+    like_record = cursor.fetchone()
 
-    try:
+    if like_record: 
+        #Användaren har redan gillat denna post -> ta bort like (toggles behavior)
         cursor.execute(
-            "INSERT INTO likes (post_id, username) VALUES (%s, %s)",
+            "DELETE FROM likes WHERE post_id = %s AND username = %s",
             (post_id, username)
         )
         conn.commit()
-
-    except mysql.connector.IntegrityError:
-        flash("You have already liked this post.", "danger")
-        return redirect(request.referrer)
+        flash("Like removed", "info")
+    else:
+        try:
+            cursor.execute(
+                "INSERT INTO likes (post_id, username) VALUES (%s, %s)",
+                (post_id, username)
+            )
+            conn.commit()
+            flash("Post liked", "success")
+        except mysql.connector.IntegrityError:
+            # Kan hända vid race conditions
+            flash("You have already liked this post.", "danger")
 
     cursor.close()
     conn.close()
-
     return redirect(request.referrer)
 
 # Route för att ta bort like från ett inlägg
 @app.route('/forum/topic/dislike_post/<int:post_id>', methods=['POST'])
 @login_required
 def dislike_post(post_id):
-
     username = session.get("username")
 
+    if not username:
+        return {"error": "Not logged in"}, 401
+
     conn = get_db_connection()
-    cursor = conn.cursor()
-
-
+    cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "DELETE FROM likes WHERE post_id = %s AND username = %s",
+        "SELECT * FROM dislikes WHERE post_id = %s AND username = %s",
         (post_id, username)
     )
+    dislike_record = cursor.fetchone()
 
-    conn.commit()
+    if dislike_record: 
+        #Användaren har redan gillat denna post -> ta bort like (toggles behavior)
+        cursor.execute(
+            "DELETE FROM dislikes WHERE post_id = %s AND username = %s",
+            (post_id, username)
+        )
+        conn.commit()
+        flash("Dislike removed", "info")
+    else:
+        try:
+            cursor.execute(
+                "INSERT INTO dislikes (post_id, username) VALUES (%s, %s)",
+                (post_id, username)
+            )
+            conn.commit()
+            flash("Post disliked", "success")
+        except mysql.connector.IntegrityError:
+            # Kan hända vid race conditions
+            flash("You have already disliked this post.")
 
     cursor.close()
     conn.close()
-
     return redirect(request.referrer)
 
 # Route för att ta bort ett inlägg, endast av admin eller den som skrev inlägget
