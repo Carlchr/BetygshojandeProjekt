@@ -450,7 +450,6 @@ def delete_post(post_id):
     conn.close()
 
     if not post:
-<<<<<<< Updated upstream
         flash("Post not found.", "danger")
         return redirect(url_for("index"))
 
@@ -459,13 +458,6 @@ def delete_post(post_id):
     elif post["username"] != username:
         flash("Not allowed to delete this post.", "danger")
         return redirect(url_for("open_topic", topic_id=post["topic_id"]))
-=======
-        return {"error": "Post not found"}, 404
-    if user["role"] == "admin":
-        pass
-    elif post["username"] != username:
-        return {"error": "Not allowed"}, 403
->>>>>>> Stashed changes
 
     cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
     conn.commit()
