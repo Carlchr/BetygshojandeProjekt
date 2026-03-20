@@ -31,7 +31,8 @@ CREATE TABLE `likes` (
   `id` int(11) NOT NULL,
   `post_id` int(11) DEFAULT NULL,
   `username` varchar(50) DEFAULT NULL,
-  `likes` int(50) NOT NULL
+  `likes` int(50) NOT NULL,
+  `dislikes` int(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
