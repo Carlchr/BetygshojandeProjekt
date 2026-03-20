@@ -147,7 +147,7 @@ def register():
             return redirect(url_for('login'))
         except mysql.connector.IntegrityError:
             flash('Username or email already exists.', 'danger')
-        except Exception as e:
+        except Error:
             flash('Error creating account.', 'danger')
     return render_template('register.html')
 
