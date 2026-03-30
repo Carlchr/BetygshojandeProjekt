@@ -1,5 +1,6 @@
 from functools import wraps
 import os
+from unittest import result
 from flask import Flask, render_template, request, session, flash, redirect, url_for, jsonify
 import mysql.connector
 from mysql.connector import Error
@@ -199,32 +200,79 @@ def profile():
 # POST: uppdaterar användarnamn och session
 @app.route('/profile', methods=['POST'])
 @login_required
-def update_user():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    # 1. Hämta data från body (req.body)
-    new_username = request.form.get('username')
-    username = session.get('username')
-   
-    if not username or not new_username:
-        return {"error": "Ingen session"}, 401
-    
-    # skapa databaskoppling (kod bortklippt) och använd UPDATE för att uppdatera databasen
-    sql = """UPDATE users SET username = %s WHERE username = %s"""
-   
-    # 3. Kör frågan med en tupel av värden
-    cursor.execute(sql, (new_username, username))
-    
-    conn.commit()
-    # Kontrollera om någon rad faktiskt uppdaterades
-    if cursor.rowcount == 0: 
-        return print({"error": "Användaren hittades inte"}), 404
-    
-    session["username"] = new_username  # Uppdatera sessionen med det nya användarnamnet
+def update_username():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        # 1. Hämta data från body (req.body)
+        new_username = request.form.get('username')
+        username = session.get('username')
 
-    cursor.close()
-    conn.close()
-    return redirect(url_for("profile") )
+        if not username or not new_username:
+            return flash("Ingen session"), 401
+
+        # skapa databaskoppling (kod bortklippt) och använd UPDATE för att uppdatera databasen
+        sql = """UPDATE users SET username = %s WHERE username = %s"""
+
+        #uppdatera användarnamet 
+        cursor.execute(sql, (new_username, username))
+
+        
+        conn.commit()
+        # Kontrollera om någon rad faktiskt uppdaterades
+        if cursor.rowcount == 0: 
+            return print({"error": "Användaren hittades inte"}), 404
+        
+        session["username"] = new_username  # Uppdatera sessionen med det nya användarnamnet
+
+        cursor.close()
+        conn.close()
+        return redirect(url_for("profile") )
+    except Error as e:
+        app.logger.error(f"Error updating user: {e}", exc_info=True)
+        flash("An error occurred while updating your profile.", "danger")
+        return redirect(url_for("profile"))
+
+@app.route('/profile', methods=['POST'])
+@login_required
+def update_password():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        # 1. Hämta data från body (req.body)
+        username = session.get('username')
+        #lösenordet man villa byta till
+        new_password = request.form.get('password')
+        #nuvarande lösenord
+        current_password = request.form.get('currentpassword')
+        #sql
+        password_sql_select = "SELECT password FROM users WHERE username = %s"
+        password_sql_update = "UPDATE users SET password = %s WHERE username = %s"
+
+        #hämta password från databasen 
+        cursor.execute(password_sql_select, (username,))
+        database_password = cursor.fetchone()
+        
+        current_password_check = check_password_hash(database_password["password"], current_password)
+
+        if not current_password_check:
+            return {"error": "Felaktigt nuvarande lösenord"}, 400
+
+        cursor.execute(password_sql_update, (new_password, username))
+
+        conn.commit()
+        if cursor.rowcount == 0:
+            return print({"error": "Användaren hittades inte"}), 404
+        cursor.close()
+        conn.close()
+        flash("Lösenord uppdaterat!", "success")
+        return redirect(url_for("profile") )
+    except Error as e:
+        app.logger.error(f"Error updating user: {e}", exc_info=True)
+        flash("An error occurred while updating your profile.", "danger")
+        return redirect(url_for("profile"))
+
+
 
 # Route för forumöversikten
 # Visar alla trådar
@@ -391,6 +439,7 @@ def like_post(post_id):
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+
     cursor.execute(
         "SELECT * FROM likes WHERE post_id = %s AND username = %s",
         (post_id, username)
@@ -477,9 +526,6 @@ def delete_post(post_id):
 
     cursor.execute("SELECT role FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
 
     if not post:
         flash("Post not found.", "danger")

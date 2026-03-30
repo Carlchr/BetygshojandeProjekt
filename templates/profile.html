@@ -15,14 +15,23 @@
             <p>Not logged in. <a href="/login">Login here</a></p>
         {% endif %}
         <br><hr><br>
-        <form method="post">
+        <form method="post" action="{{ url_for('update_username') }}">
             <label for="username">Nytt användarnamn:</label>
             <input type="text" id="username" name="username" required><br><br>
-            <input type="submit" value="Uppdatera Profil">
+            <input type="submit" value="Uppdatera Användarnamn" class="btn-update">
         </form>
         {% if user.role == 'admin' %}
             <a href="{{ url_for('admin') }}" class="btn-return"> Admin Panel </a>
         {% endif %}
+
+        <form method="post" action="{{ url_for('update_password') }}">
+            <label for="currentpassword">Gammalt lösenord:</label>
+            <input type="password" id="currentpassword" name="currentpassword" required><br><br>
+
+            <label for="password">Nytt lösenord:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <input type="submit" value="Uppdatera Lösenord" class="btn-update">
+        </form>
     </div>
     <script src="static/js/main.js"></script>
 
