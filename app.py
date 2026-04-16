@@ -198,75 +198,87 @@ def profile():
 
 # Route för att uppdatera användarprofilen
 # POST: uppdaterar användarnamn och session
-@app.route('/profile', methods=['POST'])
+@app.route('/profile/update_username', methods=['POST'])
 @login_required
 def update_username():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # 1. Hämta data från body (req.body)
         new_username = request.form.get('username')
         username = session.get('username')
 
         if not username or not new_username:
-            return flash("Ingen session"), 401
+            flash("Ingen session eller nytt användarnamn saknas.", "danger")
+            return redirect(url_for("profile"))
 
-        # skapa databaskoppling (kod bortklippt) och använd UPDATE för att uppdatera databasen
         sql = """UPDATE users SET username = %s WHERE username = %s"""
-
-        #uppdatera användarnamet 
         cursor.execute(sql, (new_username, username))
-
-        
         conn.commit()
-        # Kontrollera om någon rad faktiskt uppdaterades
-        if cursor.rowcount == 0: 
-            return print({"error": "Användaren hittades inte"}), 404
-        
+
+        if cursor.rowcount == 0:
+            flash("Användaren hittades inte.", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(url_for("profile"))
+
         session["username"] = new_username  # Uppdatera sessionen med det nya användarnamnet
 
         cursor.close()
         conn.close()
-        return redirect(url_for("profile") )
+        flash("Användarnamn uppdaterat!", "success")
+        return redirect(url_for("index"))
     except Error as e:
         app.logger.error(f"Error updating user: {e}", exc_info=True)
         flash("An error occurred while updating your profile.", "danger")
         return redirect(url_for("profile"))
 
-@app.route('/profile', methods=['POST'])
+@app.route('/profile/update_password', methods=['POST'])
 @login_required
 def update_password():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # 1. Hämta data från body (req.body)
         username = session.get('username')
-        #lösenordet man villa byta till
         new_password = request.form.get('password')
-        #nuvarande lösenord
         current_password = request.form.get('currentpassword')
-        #sql
+
+        if not username or not new_password or not current_password:
+            flash("Alla lösenordsfält måste fyllas i.", "danger")
+            return redirect(url_for("profile"))
+
         password_sql_select = "SELECT password FROM users WHERE username = %s"
         password_sql_update = "UPDATE users SET password = %s WHERE username = %s"
 
-        #hämta password från databasen 
         cursor.execute(password_sql_select, (username,))
         database_password = cursor.fetchone()
-        
+
+        if not database_password:
+            flash("Användaren hittades inte.", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(url_for("profile"))
+
         current_password_check = check_password_hash(database_password["password"], current_password)
-
         if not current_password_check:
-            return {"error": "Felaktigt nuvarande lösenord"}, 400
+            flash("Felaktigt nuvarande lösenord.", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(url_for("profile"))
 
-        cursor.execute(password_sql_update, (new_password, username))
-
+        hashed_password = generate_password_hash(new_password)
+        cursor.execute(password_sql_update, (hashed_password, username))
         conn.commit()
+
         if cursor.rowcount == 0:
-            return print({"error": "Användaren hittades inte"}), 404
+            flash("Användaren hittades inte.", "danger")
+            cursor.close()
+            conn.close()
+            return redirect(url_for("profile"))
+
         cursor.close()
         conn.close()
         flash("Lösenord uppdaterat!", "success")
-        return redirect(url_for("profile") )
+        return redirect(url_for("profile"))
     except Error as e:
         app.logger.error(f"Error updating user: {e}", exc_info=True)
         flash("An error occurred while updating your profile.", "danger")
