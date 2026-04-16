@@ -427,13 +427,23 @@ def open_topic(topic_id):
     posts = cursor.fetchall()
 
     for post in posts:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT COUNT(*) FROM likes WHERE post_id = %s",
+        like_cursor = conn.cursor()
+        like_cursor.execute(
+            "SELECT COUNT(*) FROM likes WHERE post_id = %s AND likes = 1",
             (post["id"],)
         )
-        result = cursor.fetchone()
-        post["likes_count"] = result[0]
+        result = like_cursor.fetchone()
+        post["likes_count"] = result[0] if result else 0
+        like_cursor.close()
+
+        dislike_cursor = conn.cursor()
+        dislike_cursor.execute(
+            "SELECT COUNT(*) FROM likes WHERE post_id = %s AND dislikes = 1",
+            (post["id"],)
+        )
+        result = dislike_cursor.fetchone()
+        post["dislikes_count"] = result[0] if result else 0
+        dislike_cursor.close()
 
     cursor.close()
     conn.close()
@@ -455,36 +465,42 @@ def like_post(post_id):
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute(
-        "SELECT * FROM likes WHERE post_id = %s AND username = %s",
+        "SELECT likes, dislikes FROM likes WHERE post_id = %s AND username = %s",
         (post_id, username)
     )
     like_record = cursor.fetchone()
 
-    if like_record: 
-        #Användaren har redan gillat denna post -> ta bort like (toggles behavior)
-        cursor.execute(
-            "DELETE FROM likes WHERE post_id = %s AND username = %s",
-            (post_id, username)
-        )
-        conn.commit()
-        flash("Like removed", "info")
+    if like_record:
+        if like_record["likes"] == 1:
+            cursor.execute(
+                "DELETE FROM likes WHERE post_id = %s AND username = %s",
+                (post_id, username)
+            )
+            conn.commit()
+            flash("Like removed", "info")
+        else:
+            cursor.execute(
+                "UPDATE likes SET likes = 1, dislikes = 0 WHERE post_id = %s AND username = %s",
+                (post_id, username)
+            )
+            conn.commit()
+            flash("Changed dislike to like.", "success")
     else:
         try:
             cursor.execute(
-                "INSERT INTO likes (post_id, username) VALUES (%s, %s)",
+                "INSERT INTO likes (post_id, username, likes, dislikes) VALUES (%s, %s, 1, 0)",
                 (post_id, username)
             )
             conn.commit()
             flash("Post liked", "success")
         except mysql.connector.IntegrityError:
-            # Kan hända vid race conditions
             flash("You have already liked this post.", "danger")
 
     cursor.close()
     conn.close()
     return redirect(request.referrer)
 
-# Route för att ta bort like från ett inlägg
+# Route för att ogilla ett inlägg
 @app.route('/forum/topic/dislike_post/<int:post_id>', methods=['POST'])
 @login_required
 def dislike_post(post_id):
@@ -496,30 +512,36 @@ def dislike_post(post_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT * FROM dislikes WHERE post_id = %s AND username = %s",
+        "SELECT likes, dislikes FROM likes WHERE post_id = %s AND username = %s",
         (post_id, username)
     )
-    dislike_record = cursor.fetchone()
+    like_record = cursor.fetchone()
 
-    if dislike_record: 
-        #Användaren har redan gillat denna post -> ta bort like (toggles behavior)
-        cursor.execute(
-            "DELETE FROM dislikes WHERE post_id = %s AND username = %s",
-            (post_id, username)
-        )
-        conn.commit()
-        flash("Dislike removed", "info")
+    if like_record:
+        if like_record["dislikes"] == 1:
+            cursor.execute(
+                "DELETE FROM likes WHERE post_id = %s AND username = %s",
+                (post_id, username)
+            )
+            conn.commit()
+            flash("Dislike removed", "info")
+        else:
+            cursor.execute(
+                "UPDATE likes SET likes = 0, dislikes = 1 WHERE post_id = %s AND username = %s",
+                (post_id, username)
+            )
+            conn.commit()
+            flash("Changed like to dislike.", "success")
     else:
         try:
             cursor.execute(
-                "INSERT INTO dislikes (post_id, username) VALUES (%s, %s)",
+                "INSERT INTO likes (post_id, username, likes, dislikes) VALUES (%s, %s, 0, 1)",
                 (post_id, username)
             )
             conn.commit()
             flash("Post disliked", "success")
         except mysql.connector.IntegrityError:
-            # Kan hända vid race conditions
-            flash("You have already disliked this post.")
+            flash("You have already disliked this post.", "danger")
 
     cursor.close()
     conn.close()
