@@ -1,5 +1,7 @@
 from flask import *
 
+# Anpassade felhanterare för Flask-applikationen.
+# Denna fil definierar responsmallar för vanliga HTTP-fel, som 404, 429 och 500.
 app = Flask(__name__)
 
 @app.errorhandler(404)

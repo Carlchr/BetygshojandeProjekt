@@ -10,6 +10,8 @@ from safety import limiter
 from flask_socketio import emit
 from error import *  # Importera alla error handlers från error.py
 
+# Huvudapplikation för forumet. Här definieras Flask-appen, databaskopplingar,
+# autentiseringskontroller, API-routes och Socket.IO-hantering.
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key@£$€{--![]}') # Använd en miljövariabel för hemligheten, eller en standard om den inte är satt
 

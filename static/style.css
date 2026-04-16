@@ -1,3 +1,9 @@
+/*
+    style.css
+    Globala stilar för forumapplikationen.
+    Innehåller grundläggande layout, forms och färgtema.
+*/
+
 * {
     margin: 0;
     padding: 0;
