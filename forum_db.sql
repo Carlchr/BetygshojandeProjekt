@@ -19,6 +19,7 @@ SET time_zone = "+00:00";
 
 --
 -- Databas: `forum_db`
+-- Denna SQL-dump skapar strukturen och testdata för forumapplikationen.
 --
 
 -- --------------------------------------------------------
