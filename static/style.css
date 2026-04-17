@@ -308,6 +308,19 @@ main {
     padding: 0.5rem 0.9rem;
     font-size: 0.85rem;
 }
+.btn-delete-container {
+    margin-left: auto;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.liking{
+    display: flex;
+    justify-content: space-evenly;
+}
+.btn-like {
+    margin-right: 10px;
+}
 
 .btn-like:hover {
     background-color: rgba(40, 167, 69, 0.9);

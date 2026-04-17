@@ -6,7 +6,6 @@
     <h1>Forum sidan</h1>
     <p> Det här är forum-sidan. </p><br>
     
-    <a href="{{ url_for('new_topic') }}" class="new-thread-btn"> <button type="button"> Nytt ämne </button> </a>
 
     <div class="forum-list">
         <br><h3><a href="{{ url_for('realtidschatt') }}"> <p><strong> Realtidschatt </strong></p> </a></h3>
@@ -18,6 +17,9 @@
             <input type="text" name="searchInfo" placeholder="Sök efter trådar...">
             <button type="submit"> Sök </button>
         </form>
+
+        <a href="{{ url_for('new_topic') }}" class="new-thread-btn"> <button type="button"> Nytt ämne </button> </a>
+
 
         {% for topic in topics %}
             <div class="thread-card">

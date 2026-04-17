@@ -3,7 +3,6 @@ import os
 from unittest import result
 from flask import Flask, render_template, request, session, flash, redirect, url_for, jsonify
 import mysql.connector
-from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_socketio import SocketIO
 from safety import limiter
@@ -52,7 +51,7 @@ def get_db_connection():
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
         return connection
-    except Error as e:
+    except Exception as e:
         print(f"Fel vid anslutning till MySQL: {e}")
         return None
 
@@ -120,7 +119,7 @@ def login():
 
             session["username"] = user["username"]
             return redirect(url_for("profile"))
-    except Error as e:
+    except Exception as e:
         app.logger.error(f"Error during login: {e}", exc_info=True)
         flash("An error occurred during login", "danger")
         # use the template name, not the URL, otherwise Jinja will try to load a file
@@ -155,7 +154,7 @@ def register():
             return redirect(url_for('login'))
         except mysql.connector.IntegrityError:
             flash('Username or email already exists.', 'danger')
-        except Error:
+        except Exception:
             flash('Error creating account.', 'danger')
     return render_template('register.html')
 
@@ -229,7 +228,7 @@ def update_username():
         conn.close()
         flash("Användarnamn uppdaterat!", "success")
         return redirect(url_for("index"))
-    except Error as e:
+    except Exception as e:
         app.logger.error(f"Error updating user: {e}", exc_info=True)
         flash("An error occurred while updating your profile.", "danger")
         return redirect(url_for("profile"))
@@ -281,7 +280,7 @@ def update_password():
         conn.close()
         flash("Lösenord uppdaterat!", "success")
         return redirect(url_for("profile"))
-    except Error as e:
+    except Exception as e:
         app.logger.error(f"Error updating user: {e}", exc_info=True)
         flash("An error occurred while updating your profile.", "danger")
         return redirect(url_for("profile"))
@@ -342,19 +341,20 @@ def new_topic():
     if request.method == 'POST':
         title = request.form['title']
         username = session.get('username')
+        content = request.form['content']
         conn = get_db_connection()
         if conn is None:
             flash('Databasanslutning misslyckades. Försök igen senare.')
             return render_template('new_topic.html')
         try:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO topics (rubrik, username) VALUES (%s, %s)', (title, username))
+            cursor.execute('INSERT INTO topics (rubrik, username, innehall) VALUES (%s, %s, %s)', (title, username, content))
             conn.commit()
             cursor.close()
             conn.close()
             flash('Tråd skapad!', 'success')
             return redirect(url_for('forum'))
-        except Error:
+        except Exception:
             flash('Fel vid skapande av tråd.', 'danger')
     return render_template('new_topic.html')
 
@@ -381,7 +381,7 @@ def new_post(topic_id):
                 flash('Tråden existerar inte.', 'danger')
                 conn.close()
                 return redirect(url_for('forum'))
-        except Error:
+        except Exception:
             flash('Fel vid validering av tråd.', 'danger')
             cursor.close()
             conn.close()
@@ -394,7 +394,7 @@ def new_post(topic_id):
             cursor.close()
             conn.close()
             return redirect(url_for('open_topic', topic_id=topic_id))
-        except Error:
+        except Exception:
             flash('Fel vid skapande av inlägg.', 'danger')
             cursor.close()
             conn.close()
